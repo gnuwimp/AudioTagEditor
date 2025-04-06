@@ -19,7 +19,9 @@ class TaskReadAudio(val file: File, fileName: String) : Task(max = 1) {
         message = fileName
     }
 
-    //--------------------------------------------------------------------------
+    /**
+     *
+     */
     override fun run() {
         if (abort == true) {
             throw Exception(Constants.ERROR_ABORTING_READING)

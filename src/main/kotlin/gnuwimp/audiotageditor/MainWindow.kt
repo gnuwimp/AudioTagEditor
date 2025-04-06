@@ -10,7 +10,6 @@ import gnuwimp.swing.Swing
 import gnuwimp.swing.fontForAll
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
@@ -20,31 +19,30 @@ import kotlin.system.exitProcess
 
 /**
  * Main window object.
- * Show directory tree to the left.
+ * Show panel on the left with directory tree and global buttons.
  * And four tab widgets to the right.
  * A splitter is between tree and tab container widget.
  */
-class MainWindow(title: String = Constants.APP_NAME) : JFrame(title) {
-    private val pref: Preferences = Preferences.userNodeForPackage(Main.javaClass)
-    private val albumOptions      = TabAlbumOptions(pref)
-    private val albumTab          = JSplitPane()
-    private val albumTable        = TabAlbumTable()
-    private val dirPanel          = DirPanel()
-    private val fileOptions       = TabFileOptions()
-    private val fileTab           = JSplitPane()
-    private val fileTable         = TabFileTable()
-    private val main              = JPanel()
-    private val splitPane         = JSplitPane()
-    private val statusBar         = StatusBar()
-    private val tabs              = JTabbedPane()
-    private val titleOptions      = TabTitleOptions()
-    private val titleTab          = JSplitPane()
-    private val titleTable        = TabTitleTable()
-    private val trackOptions      = TabTrackOptions(pref)
-    private val trackTab          = JSplitPane()
-    private val trackTable        = TabTrackTable()
-    private var oldTabIndex       = 0
-    private var savedState        = false
+class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JFrame(title) {
+    private val albumOptions = gnuwimp.audiotageditor.album.Options(pref)
+    private val albumTab     = JSplitPane()
+    private val albumTable   = gnuwimp.audiotageditor.album.Table()
+    private val fileOptions  = gnuwimp.audiotageditor.file.Options()
+    private val fileTab      = JSplitPane()
+    private val fileTable    = gnuwimp.audiotageditor.file.Table()
+    private val leftPanel    = LeftPanel(pref)
+    private val main         = JPanel()
+    private val splitPane    = JSplitPane()
+    private val statusBar    = StatusBar()
+    private val tabs         = JTabbedPane()
+    private val titleOptions = gnuwimp.audiotageditor.title.Options()
+    private val titleTab     = JSplitPane()
+    private val titleTable   = gnuwimp.audiotageditor.title.Table()
+    private val trackOptions = gnuwimp.audiotageditor.track.Options(pref)
+    private val trackTab     = JSplitPane()
+    private val trackTable   = gnuwimp.audiotageditor.track.Table()
+    private var oldTabIndex  = 0
+    private var savedState   = false
 
     /**
      * Get or set selected tab.
@@ -70,7 +68,7 @@ class MainWindow(title: String = Constants.APP_NAME) : JFrame(title) {
         contentPane              = main
         Data.messageFunc         = { value: String -> statusBar.message = value }
         main.layout              = BorderLayout()
-        splitPane.leftComponent  = dirPanel
+        splitPane.leftComponent  = leftPanel
         splitPane.rightComponent = tabs
         trackTab.leftComponent   = trackOptions
         trackTab.rightComponent  = trackTable
@@ -92,10 +90,25 @@ class MainWindow(title: String = Constants.APP_NAME) : JFrame(title) {
 
         pack()
 
-        //----------------------------------------------------------------------
-        // Make certain that every time a tab has been switched that changed data have been saved or discarded, ask user to apply changes also
+        /**
+         * Make certain that every time a tab has been switched that changed data have been saved or discarded, ask user to apply changes also.
+         * If cell editor is active it will be canceled.
+         */
         tabs.addChangeListener { changeEvent ->
             val tab = changeEvent.source as JTabbedPane
+
+            if (trackTable.isEditing == true) {
+                trackTable.cancelEditing()
+            }
+            else if (fileTable.isEditing == true) {
+                fileTable.cancelEditing()
+            }
+            else if (titleTable.isEditing == true) {
+                titleTable.cancelEditing()
+            }
+            else if (albumTable.isEditing == true) {
+                albumTable.cancelEditing()
+            }
 
             if (selectedTab != tab.selectedIndex) {
                 val currentRow = Data.selectedRow
@@ -126,8 +139,9 @@ class MainWindow(title: String = Constants.APP_NAME) : JFrame(title) {
             }
         }
 
-        //----------------------------------------------------------------------
-        // Quit application
+        /**
+         * Quit application.
+         */
         addWindowListener( object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent?) {
                 quit()
@@ -135,7 +149,9 @@ class MainWindow(title: String = Constants.APP_NAME) : JFrame(title) {
         })
     }
 
-    //--------------------------------------------------------------------------
+    /**
+     * Load preferences from default OS place.
+     */
     fun prefLoad() {
         val w = pref.winWidth
         val h = pref.winHeight
@@ -158,38 +174,40 @@ class MainWindow(title: String = Constants.APP_NAME) : JFrame(title) {
         fontForAll    = Swing.defFont
 
         if (pref.winMax == true) {
-            extendedState = Frame.MAXIMIZED_BOTH
+            extendedState = MAXIMIZED_BOTH
         }
 
-        splitPane.dividerLocation = pref.dirSplit
-        trackTab.dividerLocation  = pref.trackSplit
-        fileTab.dividerLocation   = pref.fileSplit
-        titleTab.dividerLocation  = pref.titleSplit
-        albumTab.dividerLocation  = pref.albumSplit
+        splitPane.dividerLocation = pref.splitDir
+        trackTab.dividerLocation  = pref.SplitTrack
+        fileTab.dividerLocation   = pref.SplitFile
+        titleTab.dividerLocation  = pref.SplitTitle
+        albumTab.dividerLocation  = pref.splitAlbum
 
         validate()
-        dirPanel.restore(pref.lastPath)
+        leftPanel.restore(pref.lastPath)
         Data.sendUpdate(TrackEvent.LIST_UPDATED)
     }
 
-    //--------------------------------------------------------------------------
+    /**
+     * Save preferences to default OS place.
+     */
     private fun prefSave() {
         try {
             if (savedState == false) {
                 val size = size
                 val pos  = location
 
-                pref.lastPath   = dirPanel.currentPath
+                pref.lastPath   = leftPanel.currentPath
                 pref.winWidth   = size.width
                 pref.winHeight  = size.height
                 pref.winX       = pos.x
                 pref.winY       = pos.y
-                pref.winMax     = (extendedState and Frame.MAXIMIZED_BOTH != 0)
-                pref.dirSplit   = splitPane.dividerLocation
-                pref.trackSplit = trackTab.dividerLocation
-                pref.fileSplit  = fileTab.dividerLocation
-                pref.titleSplit = titleTab.dividerLocation
-                pref.albumSplit = albumTab.dividerLocation
+                pref.winMax     = (extendedState and MAXIMIZED_BOTH != 0)
+                pref.splitDir   = splitPane.dividerLocation
+                pref.SplitTrack = trackTab.dividerLocation
+                pref.SplitFile  = fileTab.dividerLocation
+                pref.SplitTitle = titleTab.dividerLocation
+                pref.splitAlbum = albumTab.dividerLocation
 
                 pref.flush()
                 savedState = true

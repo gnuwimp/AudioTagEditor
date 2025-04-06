@@ -3,8 +3,12 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor
+package gnuwimp.audiotageditor.title
 
+import gnuwimp.audiotageditor.Constants
+import gnuwimp.audiotageditor.Data
+import gnuwimp.audiotageditor.TrackEvent
+import gnuwimp.audiotageditor.TrackListener
 import gnuwimp.swing.ComboBox
 import gnuwimp.swing.LayoutPanel
 import gnuwimp.swing.Swing
@@ -16,7 +20,7 @@ import javax.swing.JTextField
 /**
  * A panel with options for renaming track titles
  */
-class TabTitleOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+class Options : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val appendTextCheck     = JCheckBox(Constants.LABEL_APPEND_TEXT)
     private val appendTextInput     = JTextField()
     private val applyButton         = JButton(Constants.LABEL_PREVIEW_CHANGES)
@@ -33,6 +37,7 @@ class TabTitleOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val removeLeadingCheck  = JCheckBox(Constants.LABEL_REMOVE_LEAD)
     private val removeTextCheck     = JCheckBox(Constants.LABEL_REMOVE_TEXT)
     private val removeTextInput     = JTextField()
+    private val removeTextRegex     = JCheckBox(Constants.LABEL_REMOVE_TEXT_REGEX)
     private val removeTrailingCheck = JCheckBox(Constants.LABEL_REMOVE_TRAIL)
     private val replaceTextCheck    = JCheckBox(Constants.LABEL_REPLACE_TEXT)
     private val replaceTextInput    = JTextField()
@@ -49,65 +54,68 @@ class TabTitleOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         val lw = 24
         var yp = 1
 
-        add(useFilenameCheck, x = 1, y = yp, w = lw, h = 4)
+        add(useFilenameCheck,       x = 1,      y = yp, w = lw, h = 4)
 
         yp += 5
-        add(removeLeadingCheck, x = 1, y = yp, w = lw, h = 4)
+        add(removeLeadingCheck,     x = 1,      y = yp, w = lw, h = 4)
 
         yp += 5
-        add(removeTrailingCheck, x = 1, y = yp, w = lw, h = 4)
+        add(removeTrailingCheck,    x = 1,      y = yp, w = lw, h = 4)
 
         yp += 5
-        add(setTitleCheck, x = 1, y = yp, w = lw, h = 4)
-        add(setTitleInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(setTitleCheck,          x = 1,      y = yp, w = lw, h = 4)
+        add(setTitleInput,          x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(removeTextCheck, x = 1, y = yp, w = lw, h = 4)
-        add(removeTextInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(removeTextRegex,        x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(replaceTextCheck, x = 1, y = yp, w = lw, h = 4)
-        add(replaceTextInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(removeTextCheck,        x = 1,      y = yp, w = lw, h = 4)
+        add(removeTextInput,        x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(insertAlbumCheck, x = 1, y = yp, w = lw, h = 4)
-        add(insertAlbumInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(replaceTextCheck,       x = 1,      y = yp, w = lw, h = 4)
+        add(replaceTextInput,       x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(insertArtistCheck, x = 1, y = yp, w = lw, h = 4)
-        add(insertArtistInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(insertAlbumCheck,       x = 1,      y = yp, w = lw, h = 4)
+        add(insertAlbumInput,       x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(insertTextCheck, x = 1, y = yp, w = lw, h = 4)
-        add(insertTextInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(insertArtistCheck,      x = 1,      y = yp, w = lw, h = 4)
+        add(insertArtistInput,      x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(appendTextCheck, x = 1, y = yp, w = lw, h = 4)
-        add(appendTextInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(insertTextCheck,        x = 1,      y = yp, w = lw, h = 4)
+        add(insertTextInput,        x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(titleCapCheck, x = 1, y = yp, w = lw, h = 4)
-        add(titleCapCombo, x = lw + 2, y = yp, w = -1, h = 4)
+        add(appendTextCheck,        x = 1,      y = yp, w = lw, h = 4)
+        add(appendTextInput,        x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(numberCheck, x = 1, y = yp, w = lw, h = 4)
-        add(numberCombo, x = lw + 2, y = yp, w = -1, h = 4)
+        add(titleCapCheck,          x = 1,      y = yp, w = lw, h = 4)
+        add(titleCapCombo,          x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(numberSepLabel, x = 1, y = yp, w = lw, h = 4)
-        add(numberSepInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(numberCheck,            x = 1,      y = yp, w = lw, h = 4)
+        add(numberCombo,            x = lw + 2, y = yp, w = -1, h = 4)
+
+        yp += 5
+        add(numberSepLabel,         x = 1,      y = yp, w = lw, h = 4)
+        add(numberSepInput,         x = lw + 2, y = yp, w = -1, h = 4)
 
         yp = -20
-        add(applyButton, x = 1, y = yp, w = -1, h = 4)
+        add(applyButton,            x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(undoButton, x = 1, y = yp, w = -1, h = 4)
+        add(undoButton,             x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(resetButton, x = 1, y = yp, w = -1, h = 4)
+        add(resetButton,            x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(saveButton, x = 1, y = yp, w = -1, h = 4)
+        add(saveButton,             x = 1,      y = yp, w = -1, h = 4)
 
         appendTextCheck.toolTipText     = Constants.TOOL_APPEND_TEXT
         applyButton.toolTipText         = Constants.TOOL_APPLY_CHANGES
@@ -118,6 +126,7 @@ class TabTitleOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         numberSepLabel.toolTipText      = Constants.TOOL_NUMBER_SEP
         removeLeadingCheck.toolTipText  = Constants.TOOL_REMOVE_LEAD
         removeTextCheck.toolTipText     = Constants.TOOL_REMOVE_TEXT
+        removeTextRegex.toolTipText     = Constants.TOOL_REMOVE_TEXT_REGEX
         removeTrailingCheck.toolTipText = Constants.TOOL_REMOVE_TRAIL
         replaceTextCheck.toolTipText    = Constants.TOOL_REPLACE_TEXT
         resetButton.toolTipText         = Constants.TOOL_RESET
@@ -129,33 +138,38 @@ class TabTitleOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
 
         reset()
 
-        //----------------------------------------------------------------------
-        // Update tags but do NOT save changes
+        /**
+         * Update tags but do NOT save changes.
+         */
         applyButton.addActionListener {
             Data.renameTitles(values())
         }
 
-        //----------------------------------------------------------------------
-        // Reset all options to the default values
+        /**
+         * Reset all options to the default values.
+         */
         resetButton.addActionListener {
             reset()
         }
 
-        //----------------------------------------------------------------------
-        // Save all changed tracks
+        /**
+         * Save all changed tracks.
+         */
         saveButton.addActionListener {
             Data.saveTracks()
         }
 
-        //----------------------------------------------------------------------
-        // Reset all changes to the tracks
+        /**
+         * Reset all changes to the tracks.
+         */
         undoButton.addActionListener {
             Data.copyTagsFromAudio()
             Data.sendUpdate(TrackEvent.LIST_UPDATED)
         }
 
-        //----------------------------------------------------------------------
-        // Listener callback for data changes
+        /**
+         * Listener callback for data changes.
+         */
         Data.addListener(object : TrackListener {
             override fun update(event: TrackEvent) {
                 when (event) {
@@ -176,8 +190,9 @@ class TabTitleOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         })
     }
 
-    //----------------------------------------------------------------------
-    // Reset album options to default values
+    /**
+     * Reset album options to default values.
+     */
     private fun reset() {
         useFilenameCheck.isSelected    = false
         removeLeadingCheck.isSelected  = false
@@ -203,8 +218,9 @@ class TabTitleOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         numberSepInput.text            = Constants.DEF_NUMBER_SEP
     }
 
-    //----------------------------------------------------------------------
-    // Return a string map with options set.
+    /**
+     * Return a string map with options set.
+     */
     private fun values(): Map<String, String> {
         val map = mutableMapOf<String, String>()
 
@@ -212,6 +228,7 @@ class TabTitleOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         if (removeLeadingCheck.isSelected == true)  map["leading"]       = "true"
         if (removeTrailingCheck.isSelected == true) map["trailing"]      = "true"
         if (setTitleCheck.isSelected == true)       map["set"]           = setTitleInput.text
+        if (removeTextRegex.isSelected == true)     map["regex"]         = "true"
         if (removeTextCheck.isSelected == true)     map["remove"]        = removeTextInput.text
         if (replaceTextCheck.isSelected == true)    map["replace"]       = replaceTextInput.text
         if (insertAlbumCheck.isSelected == true)    map["insert_album"]  = insertAlbumInput.text

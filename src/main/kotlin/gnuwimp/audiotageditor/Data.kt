@@ -584,7 +584,7 @@ object Data {
                 Sort.BITRATE -> (track1.bitrate + track1.artist + track1.album + track1.trackWithZeros).compareTo(track2.bitrate + track2.artist + track2.album + track2.trackWithZeros)
                 Sort.FILE -> track1.fileNameWithExtension.compareTo(track2.fileNameWithExtension)
                 Sort.FORMAT -> (track1.formatInfo + track1.artist + track1.album + track1.trackWithZeros).compareTo(track2.formatInfo + track2.artist + track2.album + track2.trackWithZeros)
-                Sort.GENRE -> (track1.genre + track1.artist + track1.album + track1.trackWithZeros).compareTo(track2.genre + track2.artist + track2.album + track2.trackWithZeros)
+                Sort.GENRE -> (track1.genreForSorting + track1.artist + track1.album + track1.trackWithZeros).compareTo(track2.genreForSorting + track2.artist + track2.album + track2.trackWithZeros)
                 Sort.SELECTED -> track1.isSelected.compareTo(track2.isSelected)
                 Sort.SIZE -> (track1.fileSize + track1.artist + track1.album + track1.trackWithZeros).compareTo(track2.fileSize + track2.artist + track2.album + track2.trackWithZeros)
                 Sort.TIME -> (track1.time + track1.artist + track1.album + track1.trackWithZeros).compareTo(track2.time + track2.artist + track2.album + track2.trackWithZeros)

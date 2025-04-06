@@ -3,8 +3,9 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor
+package gnuwimp.audiotageditor.album
 
+import gnuwimp.audiotageditor.*
 import gnuwimp.swing.LayoutPanel
 import gnuwimp.swing.Swing
 import gnuwimp.swing.TableHeader
@@ -16,34 +17,41 @@ import javax.swing.table.AbstractTableModel
 /**
  * Table for album data.
  */
-class TabAlbumTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
-    private val colSelect       = 0
-    private val colTrack        = 1
-    private val colArtist       = 2
-    private val colAlbum        = 3
-    private val colTitle        = 4
-    private val colGenre        = 5
-    private val colAlbumArtist  = 6
-    private val table           = DataTable()
-    private val filterButton    = JButton(Constants.LABEL_FILTER)
-    private val selectButton    = JButton(Constants.LABEL_SELECT_ALL)
-    private val unselectButton  = JButton(Constants.LABEL_SELECT_NONE)
+class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+    private val colSelect      = 0
+    private val colTrack       = 1
+    private val colArtist      = 2
+    private val colAlbum       = 3
+    private val colTitle       = 4
+    private val colGenre       = 5
+    private val colAlbumArtist = 6
+    private val table          = DataTable()
+    private val filterButton   = JButton(Constants.LABEL_FILTER)
+    private val selectButton   = JButton(Constants.LABEL_SELECT_ALL)
+    private val unselectButton = JButton(Constants.LABEL_SELECT_NONE)
+
+    /**
+     * Return true if table is in edit mode.
+     */
+    val isEditing: Boolean
+        get() = table.isEditing
 
     init {
         val scroll = JScrollPane()
 
         scroll.viewport.view = table
-        add(scroll, x = 1, y = 1, w = -1, h = -6)
-        add(filterButton, x = -63, y = -5, w = 20, h = 4)
-        add(selectButton, x = -42, y = -5, w = 20, h = 4)
+        add(scroll,         x = 1,   y = 1,  w = -1, h = -6)
+        add(filterButton,   x = -63, y = -5, w = 20, h = 4)
+        add(selectButton,   x = -42, y = -5, w = 20, h = 4)
         add(unselectButton, x = -21, y = -5, w = 20, h = 4)
 
         filterButton.toolTipText   = Constants.TOOL_SELECT_ALBUM
         selectButton.toolTipText   = Constants.TOOL_SELECT_ALL
         unselectButton.toolTipText = Constants.TOOL_SELECT_NONE
 
-        //----------------------------------------------------------------------
-        // Search and select tracks
+        /**
+         * Search and select tracks.
+         */
         filterButton.addActionListener {
             val answer = JOptionPane.showInputDialog(Main.window, Constants.MESSAGE_ASK_FILTER_ALBUM, Constants.DIALOG_FILTER, JOptionPane.YES_NO_OPTION)
 
@@ -52,30 +60,37 @@ class TabAlbumTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
             }
         }
 
-        //----------------------------------------------------------------------
-        // Select all tracks
+        /**
+         * Select all tracks.
+         */
         selectButton.addActionListener {
             Data.selectAll(true)
         }
 
-        //----------------------------------------------------------------------
-        // Unselect all tracks
+        /**
+         * Unselect all tracks.
+         */
         unselectButton.addActionListener {
             Data.selectAll(false)
         }
 
-        //----------------------------------------------------------------------
-        // Create data model for table, show album info, one row per track
+        /**
+         * Create data model for table, show album info, one row per track.
+         */
         table.model = object : AbstractTableModel() {
             override fun getColumnClass(column: Int) = when (column) {
                 colSelect -> java.lang.Boolean::class.java
                 else -> java.lang.String::class.java
             }
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun getColumnCount(): Int = 7
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun getColumnName(column: Int): String = when (column) {
                 colSelect -> Constants.LABEL_SELECT
                 colTrack -> Constants.LABEL_TRACK
@@ -87,10 +102,14 @@ class TabAlbumTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                 else -> "!"
             }
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun getRowCount(): Int = Data.tracks.size
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun getValueAt(row: Int, column: Int): Any {
                 val track = Data.getTrack(row)
 
@@ -109,18 +128,14 @@ class TabAlbumTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                 return "!"
             }
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun isCellEditable(row: Int, column: Int): Boolean = true
-//            when(column) {
-//                colSelect -> true
-//                colArtist -> true
-//                colAlbum -> true
-//                colArtist -> true
-//                colTitle -> true
-//                else -> false
-//            }
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun setValueAt(value: Any?, row: Int, column: Int) {
                 val track = Data.getTrack(row)
 
@@ -162,20 +177,20 @@ class TabAlbumTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         }
 
         table.tableHeader.toolTipText = Constants.TOOL_TABLE_HEAD
-        table.setColumnWidth(colSelect, min = 50, pref = 50, max = 100)
-        table.setColumnWidth(colTrack, min = 50, pref = 50, max = 100)
-        table.setColumnWidth(colArtist, min = 50, pref = 300, max = 10000)
-        table.setColumnWidth(colAlbum, min = 50, pref = 300, max = 10000)
-        table.setColumnWidth(colTitle, min = 50, pref = 300, max = 10000)
-        table.setColumnWidth(colGenre, min = 50, pref = 200, max = 10000)
-        table.setColumnWidth(colAlbumArtist, min = 50, pref = 50, max = 10000)
+        table.setColumnWidth(colSelect,      min = 50, pref =  50, max =    75)
+        table.setColumnWidth(colTrack,       min = 50, pref =  50, max =    75)
+        table.setColumnWidth(colArtist,      min = 50, pref = 300, max = 10000)
+        table.setColumnWidth(colAlbum,       min = 50, pref = 300, max = 10000)
+        table.setColumnWidth(colTitle,       min = 50, pref = 300, max = 10000)
+        table.setColumnWidth(colGenre,       min = 50, pref = 200, max = 10000)
+        table.setColumnWidth(colAlbumArtist, min = 50, pref =  50, max = 10000)
         table.setShowGrid(false)
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         table.setColumnAlign(colTrack, SwingConstants.CENTER)
 
-
-        //----------------------------------------------------------------------
-        // Enable table header for receiving mouse clicks so data can be sorted
+        /**
+         * Enable table header for receiving mouse clicks so data can be sorted.
+         */
         table.tableHeader.addMouseListener(object : TableHeader() {
             override fun mouseClicked(event: MouseEvent?) {
                 when (columnIndex(event)) {
@@ -192,8 +207,9 @@ class TabAlbumTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
             }
         })
 
-        //----------------------------------------------------------------------
-        // If new row has been selected do select row in Data object
+        /**
+         * If new row has been selected do select row in Data object.
+         */
         table.selectionModel.addListSelectionListener { lse ->
             val index = (lse.source as ListSelectionModel).minSelectionIndex
 
@@ -202,15 +218,17 @@ class TabAlbumTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
             }
         }
 
+        /**
+         * Listener callback for data changes.
+         */
         Data.addListener(object : TrackListener {
-            //------------------------------------------------------------------
-            // Listener callback for data changes
             override fun update(event: TrackEvent) {
                 when (event) {
                     TrackEvent.ITEM_DIRTY -> {
                         repaint()
                     }
                     TrackEvent.LIST_UPDATED -> {
+                        cancelEditing()
                         table.fireModel()
                         selectButton.isEnabled   = Data.tracks.isNotEmpty()
                         unselectButton.isEnabled = Data.tracks.isNotEmpty()
@@ -224,5 +242,14 @@ class TabAlbumTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                 }
             }
         })
+    }
+
+    /**
+     * Close cell editor, if it is enabled.
+     */
+    fun cancelEditing() {
+        if (table.isEditing == true) {
+            table.cellEditor.cancelCellEditing()
+        }
     }
 }

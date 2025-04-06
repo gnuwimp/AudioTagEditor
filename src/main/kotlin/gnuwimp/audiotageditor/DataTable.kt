@@ -8,12 +8,16 @@ package gnuwimp.audiotageditor
 import gnuwimp.swing.Table
 import java.awt.Color
 
-//------------------------------------------------------------------------------
+/**
+ * Table wih colors, same for all views.
+ */
 class DataTable : Table() {
     private val dirtyColor = Color(255, 230, 230)
     private val errorColor = Color(255, 0, 0)
 
-    //--------------------------------------------------------------------------
+    /**
+     *
+     */
     override fun getRowBgColor(row: Int, column: Int): Color {
         val track = Data.getTrack(row)
 

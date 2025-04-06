@@ -23,6 +23,10 @@ AudioConverter has been tested on Windows 10 and Ubuntu 24.10.
 
 ## Changes
 <pre>
+1.2:    improved genre list selection
+        made regex usage optional in remove/replace strings
+        bug fixes and improvements
+
 1.12.2: minor fixes and updated Jaudiotagger library
 
 1.12.1: minor bug fix and updated Jaudiotagger library

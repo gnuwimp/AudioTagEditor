@@ -3,8 +3,9 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor
+package gnuwimp.audiotageditor.album
 
+import gnuwimp.audiotageditor.*
 import gnuwimp.swing.ComboBox
 import gnuwimp.swing.ImageFileDialog
 import gnuwimp.swing.LayoutPanel
@@ -19,7 +20,7 @@ import javax.swing.JTextField
 /**
  * Option panel for changing album tags.
  */
-class TabAlbumOptions(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val albumArtistCheck = JCheckBox(Constants.LABEL_ALBUM_ARTIST)
     private val albumArtistInput = JTextField()
     private val albumCheck       = JCheckBox(Constants.LABEL_ALBUM)
@@ -37,8 +38,10 @@ class TabAlbumOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
     private val coverIcon        = JLabel()
     private val encoderCheck     = JCheckBox(Constants.LABEL_ENCODER)
     private val encoderInput     = JTextField()
+    private val genreGroupLabel  = JLabel(Constants.LABEL_GENRE_GROUP)
+    private val genreGroupCombo  = ComboBox<String>(strings = Genre.GROUPS, callback = { genreCombo.setStrings(strings = Genre.get(it), selected = -1) })
     private val genreCheck       = JCheckBox(Constants.LABEL_GENRE)
-    private val genreCombo       = ComboBox<String>(strings = ID3Genre.strings.sorted())
+    private val genreCombo       = ComboBox<String>(strings = Genre.get(""))
     private val loadCoverButton  = JButton(Constants.LABEL_LOAD_IMAGE)
     private val resetButton      = JButton(Constants.LABEL_RESET)
     private val saveButton       = JButton(Constants.LABEL_SAVE)
@@ -53,63 +56,67 @@ class TabAlbumOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
         val lw = 20
         var yp = 1
 
-        add(artistCheck, x = 1, y = yp, w = lw, h = 4)
-        add(artistInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(artistCheck,        x = 1,      y = yp, w = lw, h = 4)
+        add(artistInput,        x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(albumCheck, x = 1, y = yp, w = lw, h = 4)
-        add(albumInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(albumCheck,         x = 1,      y = yp, w = lw, h = 4)
+        add(albumInput,         x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(albumArtistCheck, x = 1, y = yp, w = lw, h = 4)
-        add(albumArtistInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(albumArtistCheck,   x = 1,      y = yp, w = lw, h = 4)
+        add(albumArtistInput,   x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(copyCheck, x = 1, y = yp, w = lw, h = 4)
-        add(copyCombo, x = lw + 2, y = yp, w = -1, h = 4)
+        add(copyCheck,          x = 1,      y = yp, w = lw, h = 4)
+        add(copyCombo,          x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(genreCheck, x = 1, y = yp, w = lw, h = 4)
-        add(genreCombo, x = lw + 2, y = yp, w = -1, h = 4)
+        add(genreGroupLabel,    x = 1,      y = yp, w = lw, h = 4)
+        add(genreGroupCombo,    x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(yearCheck, x = 1, y = yp, w = lw, h = 4)
-        add(yearInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(genreCheck,         x = 1,      y = yp, w = lw, h = 4)
+        add(genreCombo,         x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(trackCheck, x = 1, y = yp, w = lw, h = 4)
-        add(trackInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(yearCheck,          x = 1,      y = yp, w = lw, h = 4)
+        add(yearInput,          x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(commentCheck, x = 1, y = yp, w = lw, h = 4)
-        add(commentInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(trackCheck,         x = 1,      y = yp, w = lw, h = 4)
+        add(trackInput,         x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(composerCheck, x = 1, y = yp, w = lw, h = 4)
-        add(composerInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(commentCheck,       x = 1,      y = yp, w = lw, h = 4)
+        add(commentInput,       x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(encoderCheck, x = 1, y = yp, w = lw, h = 4)
-        add(encoderInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(composerCheck,      x = 1,      y = yp, w = lw, h = 4)
+        add(composerInput,      x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(coverCheck, x = 1, y = yp, w = lw, h = 4)
-        add(coverIcon, x = lw + 2, y = yp, w = -1, h = (Constants.ICON_SIZE / (Swing.defFont.size / 2)) + 4)
+        add(encoderCheck,       x = 1,      y = yp, w = lw, h = 4)
+        add(encoderInput,       x = lw + 2, y = yp, w = -1, h = 4)
+
+        yp += 5
+        add(coverCheck,         x = 1,      y = yp, w = lw, h = 4)
+        add(coverIcon,          x = lw + 2, y = yp, w = -1, h = (Constants.ICON_SIZE / (Swing.defFont.size / 2)) + 4)
 
         yp = -25
-        add(loadCoverButton, x = 1, y = yp, w = -1, h = 4)
+        add(loadCoverButton,    x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(applyButton, x = 1, y = yp, w = -1, h = 4)
+        add(applyButton,        x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(undoButton, x = 1, y = yp, w = -1, h = 4)
+        add(undoButton,         x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(resetButton, x = 1, y = yp, w = -1, h = 4)
+        add(resetButton,        x = 1, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(saveButton, x = 1, y = yp, w = -1, h = 4)
+        add(saveButton,         x = 1, y = yp, w = -1, h = 4)
 
         albumArtistCheck.toolTipText  = Constants.TOOL_ALBUM_ARTIST
         albumCheck.toolTipText        = Constants.TOOL_ALBUM
@@ -132,8 +139,9 @@ class TabAlbumOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
 
         reset()
 
-        //----------------------------------------------------------------------
-        // Load cover image for icon
+        /**
+         * Load cover image for icon.
+         */
         loadCoverButton.addActionListener {
             val dlg  = ImageFileDialog(pref.picPath, Main.window)
             val file = dlg.file
@@ -157,36 +165,41 @@ class TabAlbumOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
             }
         }
 
-        //----------------------------------------------------------------------
-        // Update tags but do NOT save changes
+        /**
+         * Update tags but do NOT save changes.
+         */
         applyButton.addActionListener {
             Data.renameAlbums(values())
         }
 
-        //----------------------------------------------------------------------
-        // Reset options to default values and undo changes
+        /**
+         * Reset options to default values and undo changes.
+         */
         resetButton.addActionListener {
             reset()
             Data.copyTagsFromAudio()
             Data.sendUpdate(TrackEvent.LIST_UPDATED)
         }
 
-        //----------------------------------------------------------------------
-        // Save all changed tracks
+        /**
+         * Save all changed tracks.
+         */
         saveButton.addActionListener {
             Data.saveTracks()
         }
 
-        //----------------------------------------------------------------------
-        // Reset all changes to the tracks that has not been saved
+        /**
+         * Reset all changes to the tracks that has not been saved.
+         */
         undoButton.addActionListener {
             Data.copyTagsFromAudio()
             Data.sendUpdate(TrackEvent.LIST_UPDATED)
         }
 
+        /**
+         * Listener callback for data changes.
+         */
         Data.addListener(object : TrackListener {
-            //------------------------------------------------------------------
-            // Listener callback for data changes
             override fun update(event: TrackEvent) {
                 if (event == TrackEvent.ITEM_DIRTY) {
                     saveButton.isEnabled = Data.isAnyChangedAndSelected
@@ -200,8 +213,9 @@ class TabAlbumOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
         })
     }
 
-    //--------------------------------------------------------------------------
-    // Reset album options to default values including resetting cover icon.
+    /**
+     * Reset album options to default values including resetting cover icon.
+     */
     private fun reset() {
         artistCheck.isSelected      = false
         artistInput.text            = ""
@@ -227,8 +241,9 @@ class TabAlbumOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
         coverIcon.icon              = Data.loadIconFromPath()
     }
 
-    //--------------------------------------------------------------------------
-    // Return a string map with options set.
+    /**
+     * Return a string map with options set.
+     */
     private fun values(): Map<String, String> {
         val map = mutableMapOf<String, String>()
 

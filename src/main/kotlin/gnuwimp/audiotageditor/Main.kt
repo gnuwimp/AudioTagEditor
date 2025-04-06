@@ -9,16 +9,19 @@ import gnuwimp.swing.Swing
 import java.awt.Font
 import java.awt.Image
 import java.awt.Toolkit
-import java.io.IOException
+import java.util.prefs.Preferences
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.system.exitProcess
 
-//------------------------------------------------------------------------------
+/**
+ * Application start.
+ */
 object Main {
+    val icon:    Image
     val noImage: Image
-    val icon: Image
-    val window: MainWindow
+    val pref:    Preferences
+    val window:  MainWindow
 
     init {
         try {
@@ -28,7 +31,8 @@ object Main {
             icon          = "gnuwimp/audiotageditor/AudioTagEditor.png".loadImageFromResource()
             Swing.bigFont = Font(Font.SANS_SERIF, Font.PLAIN, 24)
             Swing.defFont = Font(Font.SANS_SERIF, Font.PLAIN, 12)
-            window        = MainWindow()
+            pref          = Preferences.userNodeForPackage(Main.javaClass)
+            window        = MainWindow(pref)
         }
         catch(e: Exception) {
             e.printStackTrace()
@@ -37,7 +41,9 @@ object Main {
         }
     }
 
-    //--------------------------------------------------------------------------
+    /**
+     * Load application icon.
+     */
     private fun String.loadImageFromResource(): Image {
         val classLoader = Main::class.java.classLoader
         val pathShell   = classLoader.getResource(this)
@@ -45,12 +51,16 @@ object Main {
         return Toolkit.getDefaultToolkit().getImage(pathShell)
     }
 
-    //--------------------------------------------------------------------------
+    /**
+     *
+     */
     private fun quit() {
         window.quit()
     }
 
-    //--------------------------------------------------------------------------
+    /**
+     *
+     */
     @JvmStatic fun main(args: Array<String>) {
         try {
             SwingUtilities.invokeLater {

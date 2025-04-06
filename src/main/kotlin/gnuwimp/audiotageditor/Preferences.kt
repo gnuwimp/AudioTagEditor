@@ -9,37 +9,7 @@ import java.io.File
 import java.util.prefs.Preferences
 
 /**
- * Split view pos for album tab
- */
-var Preferences.albumSplit: Int
-    get() = getInt("split_album", 200)
-
-    set(value) {
-        putInt("split_album", value)
-    }
-
-/**
- * Split view pos for directories
- */
-var Preferences.dirSplit: Int
-    get() = getInt("split_dir", 200)
-
-    set(value) {
-        putInt("split_dir", value)
-    }
-
-/**
- * Split view pos for file tab
- */
-var Preferences.fileSplit: Int
-    get() = getInt("split_file", 200)
-
-    set(value) {
-        putInt("split_file", value)
-    }
-
-/**
- * Last used path
+ * Last used path.
  */
 var Preferences.lastPath: String
     get() = get("path_last", File(System.getProperty("user.home")).canonicalPath)
@@ -49,7 +19,7 @@ var Preferences.lastPath: String
     }
 
 /**
- * Last used image path
+ * Last used image path.
  */
 var Preferences.picPath: String
     get() = get("path_pic", File(System.getProperty("user.home")).canonicalPath)
@@ -59,9 +29,39 @@ var Preferences.picPath: String
     }
 
 /**
- * Split view pos for title tab
+ * Split view pos for album tab.
  */
-var Preferences.titleSplit: Int
+var Preferences.splitAlbum: Int
+    get() = getInt("split_album", 200)
+
+    set(value) {
+        putInt("split_album", value)
+    }
+
+/**
+ * Split view pos for directories.
+ */
+var Preferences.splitDir: Int
+    get() = getInt("split_dir", 200)
+
+    set(value) {
+        putInt("split_dir", value)
+    }
+
+/**
+ * Split view pos for file tab.
+ */
+var Preferences.SplitFile: Int
+    get() = getInt("split_file", 200)
+
+    set(value) {
+        putInt("split_file", value)
+    }
+
+/**
+ * Split view pos for title tab.
+ */
+var Preferences.SplitTitle: Int
     get() = getInt("split_title", 200)
 
     set(value) {
@@ -69,9 +69,9 @@ var Preferences.titleSplit: Int
     }
 
 /**
- * Split view pos for track tab
+ * Split view pos for track tab.
  */
-var Preferences.trackSplit: Int
+var Preferences.SplitTrack: Int
     get() = getInt("split_track", 200)
 
     set(value) {
@@ -79,7 +79,7 @@ var Preferences.trackSplit: Int
     }
 
 /**
- * Window height
+ * Window height.
  */
 var Preferences.winHeight: Int
     get() = getInt("win_height", 600)
@@ -99,7 +99,7 @@ var Preferences.winMax: Boolean
     }
 
 /**
- * Window width
+ * Window width.
  */
 var Preferences.winWidth: Int
     get() = getInt("win_width", 800)
@@ -109,7 +109,7 @@ var Preferences.winWidth: Int
     }
 
 /**
- * Window x pos
+ * Window x pos.
  */
 var Preferences.winX: Int
     get() = getInt("win_x", 50)
@@ -119,7 +119,7 @@ var Preferences.winX: Int
     }
 
 /**
- * Window y pos
+ * Window y pos.
  */
 var Preferences.winY: Int
     get() = getInt("win_y", 50)

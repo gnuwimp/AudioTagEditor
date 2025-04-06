@@ -74,14 +74,25 @@ fun Track.renameFile(options: Map<String, String>) {
 
     name = options.getOrElse(key = "set") { name }
 
+    val regex   = options["regex"]
     val remove  = options["remove"]
     val replace = options["replace"]
 
     if (remove != null && replace == null) {
-        name = name.replace(Regex(remove), "")
+        name = if (regex != null) {
+            name.replace(Regex(remove), "")
+        }
+        else {
+            name.replace(remove, "")
+        }
     }
     else if (remove != null && replace != null) {
-        name = name.replace(Regex(remove), replace)
+        name = if (regex != null) {
+            name.replace(Regex(remove), replace)
+        }
+        else {
+            name.replace(remove, replace)
+        }
     }
 
     val insertAlbum = options["insert_album"]
@@ -158,14 +169,25 @@ fun Track.renameTitle(options: Map<String, String>) {
 
     title = options.getOrElse(key = "set") { title }
 
+    val regex   = options["regex"]
     val remove  = options["remove"]
     val replace = options["replace"]
 
     if (remove != null && replace == null) {
-        title = title.replace(Regex(remove), "")
+        title = if (regex != null) {
+            title.replace(Regex(remove), "")
+        }
+        else {
+            title.replace(remove, "")
+        }
     }
     else if (remove != null && replace != null) {
-        title = title.replace(Regex(remove), replace)
+        title = if (regex != null) {
+            title.replace(Regex(remove), replace)
+        }
+        else {
+            title.replace(remove, replace)
+        }
     }
 
     val insertAlbum = options["insert_album"]

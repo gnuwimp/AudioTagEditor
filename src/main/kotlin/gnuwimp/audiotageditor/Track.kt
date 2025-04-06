@@ -353,6 +353,18 @@ class Track(file: File) {
         }
 
     /**
+     * Audio genre string for sorting.
+     * Return a space for empty genres.
+     */
+    val genreForSorting: String
+        get() {
+            return if (test["genre"] == null || test["genre"] == "")
+                " "
+            else
+                test["genre"].toString()
+        }
+
+    /**
      * Compare metadata from file with track string hash data.
      * Return true if any data has been changed.
      */

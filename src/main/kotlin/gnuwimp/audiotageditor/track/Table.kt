@@ -3,8 +3,9 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor
+package gnuwimp.audiotageditor.track
 
+import gnuwimp.audiotageditor.*
 import gnuwimp.swing.LayoutPanel
 import gnuwimp.swing.Swing
 import gnuwimp.swing.TableHeader
@@ -16,7 +17,7 @@ import javax.swing.table.AbstractTableModel
 /**
  * Create a table with track data.
  */
-class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val colSelect      = 0
     private val colTrack       = 1
     private val colFile        = 2
@@ -31,80 +32,98 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val unselectButton = JButton(Constants.LABEL_SELECT_NONE)
     private val upButton       = JButton(Constants.LABEL_MOVE_UP)
 
+    /**
+     * Return true if table is in edit mode.
+     */
+    val isEditing: Boolean
+        get() = table.isEditing
+
     init {
         val scroll = JScrollPane()
 
         scroll.viewport.view = table
-        add(scroll, x = 1, y = 1, w = -1, h = -6)
-        add(deleteButton, x = -127, y = -5, w = 20, h = 4)
-        add(clearButton, x = -106, y = -5, w = 20, h = 4)
-        add(selectButton, x = -84, y = -5, w = 20, h = 4)
-        add(unselectButton, x = -63, y = -5, w = 20, h = 4)
-        add(downButton, x = -42, y = -5, w = 20, h = 4)
-        add(upButton, x = -21, y = -5, w = 20, h = 4)
+        add(scroll,         x =    1, y = 1,  w = -1, h = -6)
+        add(deleteButton,   x = -127, y = -5, w = 20, h = 4)
+        add(clearButton,    x = -106, y = -5, w = 20, h = 4)
+        add(selectButton,   x =  -84, y = -5, w = 20, h = 4)
+        add(unselectButton, x =  -63, y = -5, w = 20, h = 4)
+        add(downButton,     x =  -42, y = -5, w = 20, h = 4)
+        add(upButton,       x =  -21, y = -5, w = 20, h = 4)
 
+        clearButton.isEnabled      = false
         clearButton.toolTipText    = Constants.TOOL_DELETE_TAGS
+        deleteButton.isEnabled     = false
         deleteButton.toolTipText   = Constants.TOOL_DELETE_TRACKS
+        downButton.isEnabled       = false
         downButton.toolTipText     = Constants.TOOL_MOVE_DOWN
         selectButton.toolTipText   = Constants.TOOL_SELECT_ALL
         unselectButton.toolTipText = Constants.TOOL_SELECT_NONE
-        upButton.toolTipText       = Constants.TOOL_MOVE_UP
-        clearButton.isEnabled      = false
-        deleteButton.isEnabled     = false
-        downButton.isEnabled       = false
         upButton.isEnabled         = false
+        upButton.toolTipText       = Constants.TOOL_MOVE_UP
 
-        //----------------------------------------------------------------------
-        // Remove all tags from all selected tracks
+        /**
+         * Remove all tags from all selected tracks.
+         */
         clearButton.addActionListener {
             if (JOptionPane.showConfirmDialog(Main.window, Constants.MESSAGE_ASK_CLEAR_HTML, Constants.DIALOG_CLEAR, JOptionPane.YES_NO_OPTION) == Constants.YES) {
                 Data.removeTagsForAll()
             }
         }
 
-        //----------------------------------------------------------------------
+        /**
+         *
+         */
         deleteButton.addActionListener {
             if (JOptionPane.showConfirmDialog(Main.window, Constants.MESSAGE_ASK_DELETE_HTML, Constants.DIALOG_DELETE, JOptionPane.YES_NO_OPTION) == 0) {
                 Data.deleteTracks()
             }
         }
 
-        //----------------------------------------------------------------------
-        // Move current selected row down in track list
+        /**
+         * Move current selected row down in track list.
+         */
         downButton.addActionListener {
             Data.moveRowDown()
         }
 
-        //----------------------------------------------------------------------
-        // Select all tracks
+        /**
+         * Select all tracks.
+         */
         selectButton.addActionListener {
             Data.selectAll(true)
         }
 
-        //----------------------------------------------------------------------
-        // Unselect all tracks
+        /**
+         * Unselect all tracks.
+         */
         unselectButton.addActionListener {
             Data.selectAll(false)
         }
 
-        //----------------------------------------------------------------------
-        // Move current selected row down up track list
+        /**
+         * Move current selected row down up track list.
+         */
         upButton.addActionListener {
             Data.moveRowUp()
         }
 
-        //----------------------------------------------------------------------
-        // Create data model for table, show list of file names and file properties
+        /**
+         * Create data model for table, show list of file names and file properties.
+         */
         table.model = object : AbstractTableModel() {
             override fun getColumnClass(column: Int) = when (column) {
                 colSelect -> java.lang.Boolean::class.java
                 else -> java.lang.String::class.java
             }
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun getColumnCount(): Int = 6
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun getColumnName(column: Int): String = when (column) {
                 colSelect -> Constants.LABEL_SELECT
                 colTrack -> Constants.LABEL_TRACK
@@ -115,10 +134,14 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                 else -> "!"
             }
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun getRowCount(): Int = Data.tracks.size
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun getValueAt(row: Int, column: Int): Any {
                 val track = Data.getTrack(row)
 
@@ -136,7 +159,9 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                 return ""
             }
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun isCellEditable(row: Int, column: Int): Boolean = when(column) {
                 colSelect -> true
                 colTrack -> true
@@ -144,7 +169,9 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                 else -> false
             }
 
-            //------------------------------------------------------------------
+            /**
+             *
+             */
             override fun setValueAt(value: Any?, row: Int, column: Int) {
                 val track = Data.getTrack(row)
 
@@ -156,7 +183,7 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                     else if (column == colTrack) {
                         val num = value as String
 
-                        if (column == colTrack && num.numOrZero in 1..9999 && num != track.track) {
+                        if (num.numOrZero in 1..9999 && num != track.track) {
                             track.track = num
                             Data.sendUpdate(TrackEvent.ITEM_DIRTY)
                         }
@@ -174,20 +201,21 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         }
 
         table.tableHeader.toolTipText = Constants.TOOL_TABLE_HEAD
-        table.setColumnWidth(colSelect, min = 50, pref = 50, max = 50)
-        table.setColumnWidth(colTrack, min = 50, pref = 50, max = 50)
-        table.setColumnWidth(colFile, min = 150, pref = 500, max = 10000)
-        table.setColumnWidth(colFormat, min = 75, pref = 75, max = 100)
-        table.setColumnWidth(colBitrate, min = 75, pref = 75, max = 100)
-        table.setColumnWidth(colTime, min = 75, pref = 75, max = 100)
+        table.setColumnWidth(colSelect,  min =  50, pref =  50, max =    75)
+        table.setColumnWidth(colTrack,   min =  50, pref =  50, max =    75)
+        table.setColumnWidth(colFile,    min = 150, pref = 500, max = 10000)
+        table.setColumnWidth(colFormat,  min =  75, pref =  75, max =   100)
+        table.setColumnWidth(colBitrate, min =  75, pref =  75, max =   100)
+        table.setColumnWidth(colTime,    min =  75, pref =  75, max =   100)
         table.setShowGrid(false)
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         table.setColumnAlign(colTrack, SwingConstants.CENTER)
         table.setColumnAlign(colBitrate, SwingConstants.RIGHT)
         table.setColumnAlign(colTime, SwingConstants.RIGHT)
 
-        //----------------------------------------------------------------------
-        // Enable table header for receiving mouse clicks so data can be sorted
+        /**
+         * Enable table header for receiving mouse clicks so data can be sorted.
+         */
         table.tableHeader.addMouseListener(object : TableHeader() {
             override fun mouseClicked(event: MouseEvent?) {
                 when (columnIndex(event)) {
@@ -204,8 +232,9 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
 
         })
 
-        //----------------------------------------------------------------------
-        // If new row has been selected do select row in Data object
+        /**
+         * If new row has been selected do select row in Data object.
+         */
         table.selectionModel.addListSelectionListener { lse ->
             val index = (lse.source as ListSelectionModel).minSelectionIndex
 
@@ -214,8 +243,9 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
             }
         }
 
-        //----------------------------------------------------------------------
-        // Listener callback for data changes
+        /**
+         * Listener callback for data changes.
+         */
         Data.addListener(object : TrackListener {
             override fun update(event: TrackEvent) {
                 when (event) {
@@ -225,6 +255,7 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                         repaint()
                     }
                     TrackEvent.LIST_UPDATED -> {
+                        cancelEditing()
                         table.fireModel()
                         clearButton.isEnabled  = Data.countSelected > 0
                         deleteButton.isEnabled = Data.countSelected > 0
@@ -242,5 +273,14 @@ class TabTrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                 }
              }
         })
+    }
+
+    /**
+     * Close cell editor, if it is enabled.
+     */
+    fun cancelEditing() {
+        if (table.isEditing == true) {
+            table.cellEditor.cancelCellEditing()
+        }
     }
 }

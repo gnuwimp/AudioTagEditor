@@ -6,7 +6,7 @@
 package gnuwimp.audiotageditor
 
 /**
- * All text strings for the application
+ * All text strings for the application.
  */
 object Constants {
     const val APP_NAME                    = "AudioTagEditor"
@@ -40,6 +40,7 @@ object Constants {
     const val LABEL_FILTER                = "Select..."
     const val LABEL_FORMAT                = "Format"
     const val LABEL_GENRE                 = "Genre"
+    const val LABEL_GENRE_GROUP           = "Genre groups"
     const val LABEL_INSERT_ALBUM          = "Insert album"
     const val LABEL_INSERT_ARTIST         = "Insert artist"
     const val LABEL_INSERT_TEXT           = "Insert text"
@@ -54,6 +55,7 @@ object Constants {
     const val LABEL_REMOVE_ILLEG          = "Remove illegal Characters"
     const val LABEL_REMOVE_LEAD           = "Remove leading"
     const val LABEL_REMOVE_TEXT           = "Remove text"
+    const val LABEL_REMOVE_TEXT_REGEX     = "Use regex in remove/replace"
     const val LABEL_REMOVE_TRAIL          = "Remove trailing"
     const val LABEL_REPLACE_TEXT          = "Replace text"
     const val LABEL_RESET                 = "Reset options"
@@ -111,7 +113,7 @@ object Constants {
     const val MESSAGE_SAVING_TRACK        = "Saving file %s"
     const val MESSAGE_TIME                = "in %s mS"
 
-    const val TOOL_ABOUT                  = "Show about dialog"
+    const val TOOL_ABOUT                  = "Show about dialog."
     const val TOOL_ALBUM                  = "Select to change album text for all selected tracks."
     const val TOOL_ALBUM_ARTIST           = "Set album artist for all selected tracks."
     const val TOOL_APPEND_TEXT            = "Enter text to append AFTER filename for all selected tracks."
@@ -122,25 +124,26 @@ object Constants {
     const val TOOL_COPY_ARTIST            = "Copy artist text to album artist or vice versa."
     const val TOOL_COVER                  = "<html>Select to change cover image for all selected tracks.<br>Load image first or use default image to remove covers.<html>"
     const val TOOL_DELETE_COVER           = "Delete cover image for selected track."
-    const val TOOL_DELETE_TAGS            = "Clear all tags from all tracks"
+    const val TOOL_DELETE_TAGS            = "Clear all tags from all tracks."
     const val TOOL_DELETE_TRACKS          = "Delete selected tracks from disk!"
     const val TOOL_ENCODER                = "Select to change encoder for all selected tracks."
-    const val TOOL_EXT_CAP                = "Change file extension capitalisation"
+    const val TOOL_EXT_CAP                = "Change file extension capitalisation."
     const val TOOL_GENRE                  = "Select to change genre text for all selected tracks."
-    const val TOOL_INSERT_ALBUM           = "<html>Insert album BEFORE text.<br>Enter optional separator between album and text.<br>Default separator is ' - '</html>."
-    const val TOOL_INSERT_ARTIST          = "<html>Insert artist BEFORE text.<br>Enter optional separator between artist and text.<br>Default separator is ' - '</html>."
+    const val TOOL_INSERT_ALBUM           = "<html>Insert album BEFORE text.<br>Enter optional separator between album and text.<br>Default separator is ' - '.</html>"
+    const val TOOL_INSERT_ARTIST          = "<html>Insert artist BEFORE text.<br>Enter optional separator between artist and text.<br>Default separator is ' - '.</html>"
     const val TOOL_INSERT_TEXT            = "Enter text to insert BEFORE text."
-    const val TOOL_LOAD_IMAGE             = "Load cover image from disk"
-    const val TOOL_MOVE_DOWN              = "Move selected track down in the track list"
-    const val TOOL_MOVE_UP                = "Move selected track up in the track list"
-    const val TOOL_NAME_CAP               = "Change filename capitalisation"
+    const val TOOL_LOAD_IMAGE             = "Load cover image from disk."
+    const val TOOL_MOVE_DOWN              = "Move selected track down in the track list."
+    const val TOOL_MOVE_UP                = "Move selected track up in the track list."
+    const val TOOL_NAME_CAP               = "Change filename capitalisation."
     const val TOOL_NUMBER                 = "Insert or append track number before filename."
     const val TOOL_NUMBER_SEP             = "<html>Separator string to insert or append between track number and text.<br>Default separator is space.</html>"
-    const val TOOL_QUIT                   = "Quit AudioTagEditor"
-    const val TOOL_RELOAD                 = "Reload all tracks from surrent directory"
+    const val TOOL_QUIT                   = "Quit AudioTagEditor."
+    const val TOOL_RELOAD                 = "Reload all tracks from surrent directory."
     const val TOOL_REMOVE_ILLEG           = "Remove characters such as : and / and a few more that might cause problem on various OS."
     const val TOOL_REMOVE_LEAD            = "Remove all leading none letters from the text until first letter is found."
-    const val TOOL_REMOVE_TEXT            = "<html>Enter text to remove from the text.<br>Try regular expressions such as <b>'^\\d\\d'</b> which removes the two first numbers.</html>."
+    const val TOOL_REMOVE_TEXT            = "<html>Enter text to remove from the text.<br>Try regular expressions such as <b>'^\\d\\d'</b> which removes the two first numbers.<br>Regular expression must be turned on.</html>"
+    const val TOOL_REMOVE_TEXT_REGEX      = "Use regular expressions for removing text."
     const val TOOL_REMOVE_TRAIL           = "Remove all trailing none letters from the filename."
     const val TOOL_REPLACE_TEXT           = "Enter text to replace removed text with."
     const val TOOL_RESET                  = "Reset all options."
@@ -153,7 +156,7 @@ object Constants {
     const val TOOL_SET_FILENAME           = "Enter text to use as the filename."
     const val TOOL_SET_TITLE              = "Set title to input text."
     const val TOOL_SET_YEAR               = "Select to change year for all selected tracks."
-    const val TOOL_SHOW_LOG               = "Show log window"
+    const val TOOL_SHOW_LOG               = "Show log window."
     const val TOOL_START_TRACK            = "<html>Select to change track number for all selected tracks.<br>Set start track number.</html>"
     const val TOOL_TABLE_HEAD             = "<html>Click table header to sort rows.<br>Ctrl-click to reverse sort order.</html>"
     const val TOOL_TAB_ALBUM              = "Update album tags for all tracks."
@@ -173,14 +176,16 @@ object Constants {
     const val YES                         = 0
     const val NO                          = 1
     const val CANCEL                      = 2
-    const val ICON_SIZE                   = 180
+    const val ICON_SIZE                   = 240
     const val THREADS                     = 8
 
-    //----------------------------------------------------------------------
+    /**
+     *
+     */
     fun aboutApp(): String {
         var about = "<html>" +
 
-        "<h2>AudioTagEditor 1.12.2</h2>" +
+        "<h2>AudioTagEditor 1.2</h2>" +
 
         "<h3>About</h3>" +
         "Copyright 2021 - 2025 gnuwimp@gmail.com.<br>" +

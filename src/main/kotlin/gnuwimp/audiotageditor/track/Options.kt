@@ -3,8 +3,9 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor
+package gnuwimp.audiotageditor.track
 
+import gnuwimp.audiotageditor.*
 import gnuwimp.swing.ComboBox
 import gnuwimp.swing.LayoutPanel
 import gnuwimp.swing.Swing
@@ -17,7 +18,7 @@ import javax.swing.JLabel
 /**
  * Create a panel with input widgets for all track properties.
  */
-class TabTrackOptions(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val albumLabel        = JLabel(Constants.LABEL_ALBUM)
     private val albumArtistLabel  = JLabel(Constants.LABEL_ALBUM_ARTIST)
     private val albumArtistInput  = TextField(callback = { val track = Data.selectedTrack; if (track != null && it != track.artist) { track.albumArtist = it ; Data.sendUpdate(TrackEvent.ITEM_DIRTY) } })
@@ -34,8 +35,10 @@ class TabTrackOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
     private val encoderInput      = TextField(callback = { val track = Data.selectedTrack; if (track != null && it != track.encoder) { track.encoder = it ; Data.sendUpdate(TrackEvent.ITEM_DIRTY) } })
     private val filenameLabel     = JLabel(Constants.LABEL_FILENAME)
     private val filenameInput     = TextField(callback = { val track = Data.selectedTrack; if (track != null && it != track.fileName) { track.fileName = it ; Data.sendUpdate(TrackEvent.ITEM_DIRTY) } })
+    private val genreGroupLabel   = JLabel(Constants.LABEL_GENRE_GROUP)
+    private val genreGroupCombo   = ComboBox<String>(strings = Genre.GROUPS, callback = { genreCombo.setStrings(strings = Genre.get(it), selected = -1) })
     private val genreLabel        = JLabel(Constants.LABEL_GENRE)
-    private val genreCombo        = ComboBox<String>(strings = ID3Genre.strings.sorted(), callback = { val track = Data.selectedTrack; if (track != null && it != track.genre) { track.genre = it ; Data.sendUpdate(TrackEvent.ITEM_DIRTY) } })
+    private val genreCombo        = ComboBox<String>(strings = Genre.get(""), callback = { val track = Data.selectedTrack; if (track != null && it != track.genre) { track.genre = it ; Data.sendUpdate(TrackEvent.ITEM_DIRTY) } })
     private val loadCoverButton   = JButton(Constants.LABEL_LOAD_IMAGE)
     private val removeCoverButton = JButton(Constants.LABEL_REMOVE_COVER)
     private val saveButton        = JButton(Constants.LABEL_SAVE)
@@ -45,67 +48,71 @@ class TabTrackOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
     private val trackInput        = TextField(callback = { val track = Data.selectedTrack; if (track != null && it != track.track) { track.track = it ; Data.sendUpdate(TrackEvent.ITEM_DIRTY) } })
     private val yearLabel         = JLabel(Constants.LABEL_YEAR)
     private val yearInput         = TextField(callback = { val track = Data.selectedTrack; if (track != null && it != track.year) { track.year = it ; Data.sendUpdate(TrackEvent.ITEM_DIRTY) } })
-    private val activateWidgets: List<JComponent> = listOf(artistInput, albumInput, albumArtistInput, titleInput, yearInput, genreCombo, trackInput, commentInput, composerInput, encoderInput, filenameInput, loadCoverButton)
+    private val activateWidgets: List<JComponent> = listOf(artistInput, albumInput, albumArtistInput, titleInput, yearInput, genreGroupCombo, genreCombo, trackInput, commentInput, composerInput, encoderInput, filenameInput, loadCoverButton)
 
     init {
         val lw = 16
         var yp = 1
 
-        add(artistLabel, x = 1, y = yp, w = lw, h = 4)
-        add(artistInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(artistLabel,        x = 1,      y = yp, w = lw, h = 4)
+        add(artistInput,        x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(albumLabel, x = 1, y = yp, w = lw, h = 4)
-        add(albumInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(albumLabel,         x = 1,      y = yp, w = lw, h = 4)
+        add(albumInput,         x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(albumArtistLabel, x = 1, y = yp, w = lw, h = 4)
-        add(albumArtistInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(albumArtistLabel,   x = 1,      y = yp, w = lw, h = 4)
+        add(albumArtistInput,   x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(titleLabel, x = 1, y = yp, w = lw, h = 4)
-        add(titleInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(titleLabel,         x = 1,      y = yp, w = lw, h = 4)
+        add(titleInput,         x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(yearLabel, x = 1, y = yp, w = lw, h = 4)
-        add(yearInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(yearLabel,          x = 1,      y = yp, w = lw, h = 4)
+        add(yearInput,          x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(genreLabel, x = 1, y = yp, w = lw, h = 4)
-        add(genreCombo, x = lw + 2, y = yp, w = -1, h = 4)
+        add(genreGroupLabel,    x = 1,      y = yp, w = lw, h = 4)
+        add(genreGroupCombo,    x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(trackLabel, x = 1, y = yp, w = lw, h = 4)
-        add(trackInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(genreLabel,         x = 1,      y = yp, w = lw, h = 4)
+        add(genreCombo,         x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(commentLabel, x = 1, y = yp, w = lw, h = 4)
-        add(commentInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(trackLabel,         x = 1,      y = yp, w = lw, h = 4)
+        add(trackInput,         x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(composerLabel, x = 1, y = yp, w = lw, h = 4)
-        add(composerInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(commentLabel,       x = 1,      y = yp, w = lw, h = 4)
+        add(commentInput,       x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(encoderLabel, x = 1, y = yp, w = lw, h = 4)
-        add(encoderInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(composerLabel,      x = 1,      y = yp, w = lw, h = 4)
+        add(composerInput,      x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(filenameLabel, x = 1, y = yp, w = lw, h = 4)
-        add(filenameInput, x = lw + 2, y = yp, w = -1, h = 4)
+        add(encoderLabel,       x = 1,      y = yp, w = lw, h = 4)
+        add(encoderInput,       x = lw + 2, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(coverLabel, x = 1, y = yp, w = lw, h = 4)
-        add(coverIcon, x = lw + 2, y = yp, w = -1, h = (Constants.ICON_SIZE / (Swing.defFont.size / 2)) + 4)
+        add(filenameLabel,      x = 1,      y = yp, w = lw, h = 4)
+        add(filenameInput,      x = lw + 2, y = yp, w = -1, h = 4)
+
+        yp += 5
+        add(coverLabel,         x = 1,      y = yp, w = lw, h = 4)
+        add(coverIcon,          x = lw + 2, y = yp, w = -1, h = (Constants.ICON_SIZE / (Swing.defFont.size / 2)) + 4)
 
         yp = -15
-        add(loadCoverButton, x = 1, y = yp, w = -1, h = 4)
+        add(loadCoverButton,    x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(removeCoverButton, x = 1, y = yp, w = -1, h = 4)
+        add(removeCoverButton,  x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(saveButton, x = 1, y = yp, w = -1, h = 4)
+        add(saveButton,         x = 1,      y = yp, w = -1, h = 4)
 
         coverIcon.horizontalAlignment = JLabel.LEFT
         genreCombo.isEditable         = true
@@ -116,22 +123,30 @@ class TabTrackOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
         setIcon(null)
         setButtons(false)
 
-        //----------------------------------------------------------------------
+        /**
+         *
+         */
         loadCoverButton.addActionListener {
             Data.loadImageForSelectedTrack(pref)
         }
 
-        //----------------------------------------------------------------------
+        /**
+         *
+         */
         removeCoverButton.addActionListener {
             Data.removeImage()
         }
 
-        //----------------------------------------------------------------------
+        /**
+         *
+         */
         saveButton.addActionListener {
             Data.saveTracks()
         }
 
-        //----------------------------------------------------------------------
+        /**
+         *
+         */
         Data.addListener(object : TrackListener {
             override fun update(event: TrackEvent) {
                 val track = Data.selectedTrack
@@ -158,7 +173,9 @@ class TabTrackOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
         })
     }
 
-    //----------------------------------------------------------------------
+    /**
+     *
+     */
     fun setButtons(track: Boolean) {
         saveButton.isEnabled      = Data.isAnyChangedAndSelected
         loadCoverButton.isEnabled = track == true
@@ -168,8 +185,12 @@ class TabTrackOptions(private val pref: Preferences) : LayoutPanel(size = Swing.
         }
     }
 
-    //----------------------------------------------------------------------
+    /**
+     *
+     */
     fun setFields(track: Track?) {
+        genreCombo.selectedIndex = -1
+
         if (track != null) {
             artistInput.text      = track.artist
             albumInput.text       = track.album
