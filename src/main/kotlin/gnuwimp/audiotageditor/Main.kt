@@ -5,14 +5,28 @@
 
 package gnuwimp.audiotageditor
 
+import gnuwimp.swing.BaseDialog
+import gnuwimp.swing.MessageDialog
 import gnuwimp.swing.Swing
 import java.awt.Font
 import java.awt.Image
 import java.awt.Toolkit
 import java.util.prefs.Preferences
-import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
+import javax.swing.UIManager
+import javax.swing.plaf.FontUIResource
 import kotlin.system.exitProcess
+
+/***
+ *      __  __       _
+ *     |  \/  |     (_)
+ *     | \  / | __ _ _ _ __
+ *     | |\/| |/ _` | | '_ \
+ *     | |  | | (_| | | | | |
+ *     |_|  |_|\__,_|_|_| |_|
+ *
+ *
+ */
 
 /**
  * Application start.
@@ -27,16 +41,28 @@ object Main {
         try {
             Swing.setup(theme = "nimbus", appName = Constants.APP_NAME, aboutText = Constants.aboutApp(), quitLambda = { quit() })
 
-            noImage       = "gnuwimp/audiotageditor/cover.png".loadImageFromResource()
-            icon          = "gnuwimp/audiotageditor/AudioTagEditor.png".loadImageFromResource()
-            Swing.bigFont = Font(Font.SANS_SERIF, Font.PLAIN, 24)
-            Swing.defFont = Font(Font.SANS_SERIF, Font.PLAIN, 12)
-            pref          = Preferences.userNodeForPackage(Main.javaClass)
-            window        = MainWindow(pref)
+            noImage = "gnuwimp/audiotageditor/cover.png".loadImageFromResource()
+            icon    = "gnuwimp/audiotageditor/AudioTagEditor.png".loadImageFromResource()
+            pref    = Preferences.userNodeForPackage(Main.javaClass)
+
+            val f = pref.fontSize
+
+            if (f >= Constants.MIN_FONT && f <= Constants.MAX_FONT) {
+                Swing.defFont = Font(Font.SANS_SERIF, Font.PLAIN, f)
+                Swing.bigFont = Font(Font.SANS_SERIF, Font.PLAIN, f + 10)
+            }
+
+            UIManager.put("ToolTip.font", Font(Font.SANS_SERIF, Font.PLAIN, f))
+            UIManager.put("OptionPane.messageFont", FontUIResource(Font(Font.SANS_SERIF, Font.PLAIN, f)))
+            UIManager.put("Button.defaultButtonFollowsFocus", true)
+
+            window = MainWindow()
+            BaseDialog.PARENT = window
+            BaseDialog.TITLE = Constants.APP_NAME
         }
         catch(e: Exception) {
             e.printStackTrace()
-            JOptionPane.showMessageDialog(null, e, Constants.APP_NAME, JOptionPane.ERROR_MESSAGE)
+            MessageDialog.error(label = e.toString())
             exitProcess(status = 1)
         }
     }
@@ -70,7 +96,7 @@ object Main {
         }
         catch(e: Exception) {
             e.printStackTrace()
-            JOptionPane.showMessageDialog(null, e, Constants.APP_NAME, JOptionPane.ERROR_MESSAGE)
+            MessageDialog.error(label = e.toString())
         }
     }
 }

@@ -3,24 +3,30 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor.album
+package gnuwimp.audiotageditor
 
-import gnuwimp.audiotageditor.*
-import gnuwimp.swing.ComboBox
-import gnuwimp.swing.ImageFileDialog
-import gnuwimp.swing.LayoutPanel
-import gnuwimp.swing.Swing
+import gnuwimp.swing.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.io.File
-import java.util.prefs.Preferences
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JLabel
-import javax.swing.JTextField
+import javax.swing.*
+
+/***
+ *               _ _                      ____        _   _
+ *         /\   | | |                    / __ \      | | (_)
+ *        /  \  | | |__  _   _ _ __ ___ | |  | |_ __ | |_ _  ___  _ __  ___
+ *       / /\ \ | | '_ \| | | | '_ ` _ \| |  | | '_ \| __| |/ _ \| '_ \/ __|
+ *      / ____ \| | |_) | |_| | | | | | | |__| | |_) | |_| | (_) | | | \__ \
+ *     /_/    \_\_|_.__/ \__,_|_| |_| |_|\____/| .__/ \__|_|\___/|_| |_|___/
+ *                                             | |
+ *                                             |_|
+ */
 
 /**
  * Option panel for changing album tags.
+ * Such as artist, album, album artist, genre, year, track number, comment, composer and encoder.
  */
-class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+class AlbumOptions() : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val albumArtistCheck = JCheckBox(Constants.LABEL_ALBUM_ARTIST)
     private val albumArtistInput = JTextField()
     private val albumCheck       = JCheckBox(Constants.LABEL_ALBUM)
@@ -36,6 +42,7 @@ class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.
     private val copyCombo        = ComboBox<String>(Constants.OPTIONS_COPY_ARTIST)
     private val coverCheck       = JCheckBox(Constants.LABEL_COVER)
     private val coverIcon        = JLabel()
+    private val coverSize        = JLabel()
     private val encoderCheck     = JCheckBox(Constants.LABEL_ENCODER)
     private val encoderInput     = JTextField()
     private val genreGroupLabel  = JLabel(Constants.LABEL_GENRE_GROUP)
@@ -45,78 +52,90 @@ class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.
     private val loadCoverButton  = JButton(Constants.LABEL_LOAD_IMAGE)
     private val resetButton      = JButton(Constants.LABEL_RESET)
     private val saveButton       = JButton(Constants.LABEL_SAVE)
+    private val separator        = JSeparator()
     private val trackCheck       = JCheckBox(Constants.LABEL_START_TRACK)
     private val trackInput       = JTextField()
     private val undoButton       = JButton(Constants.LABEL_UNDO)
     private val yearCheck        = JCheckBox(Constants.LABEL_SET_YEAR)
     private val yearInput        = JTextField()
+    private var coverName        = ""
     private var coverFile: File? = null
 
+    /**
+     *
+     */
     init {
         val lw = 20
+        val rw = 22
         var yp = 1
 
-        add(artistCheck,        x = 1,      y = yp, w = lw, h = 4)
-        add(artistInput,        x = lw + 2, y = yp, w = -1, h = 4)
+        add(artistCheck,        x = 1,  y = yp, w = lw, h = 4)
+        add(artistInput,        x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(albumCheck,         x = 1,      y = yp, w = lw, h = 4)
-        add(albumInput,         x = lw + 2, y = yp, w = -1, h = 4)
+        add(albumCheck,         x = 1,  y = yp, w = lw, h = 4)
+        add(albumInput,         x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(albumArtistCheck,   x = 1,      y = yp, w = lw, h = 4)
-        add(albumArtistInput,   x = lw + 2, y = yp, w = -1, h = 4)
+        add(albumArtistCheck,   x = 1,  y = yp, w = lw, h = 4)
+        add(albumArtistInput,   x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(copyCheck,          x = 1,      y = yp, w = lw, h = 4)
-        add(copyCombo,          x = lw + 2, y = yp, w = -1, h = 4)
+        add(copyCheck,          x = 1,  y = yp, w = lw, h = 4)
+        add(copyCombo,          x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(genreGroupLabel,    x = 1,      y = yp, w = lw, h = 4)
-        add(genreGroupCombo,    x = lw + 2, y = yp, w = -1, h = 4)
+        add(genreGroupLabel,    x = 1,  y = yp, w = lw, h = 4)
+        add(genreGroupCombo,    x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(genreCheck,         x = 1,      y = yp, w = lw, h = 4)
-        add(genreCombo,         x = lw + 2, y = yp, w = -1, h = 4)
+        add(genreCheck,         x = 1,  y = yp, w = lw, h = 4)
+        add(genreCombo,         x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(yearCheck,          x = 1,      y = yp, w = lw, h = 4)
-        add(yearInput,          x = lw + 2, y = yp, w = -1, h = 4)
+        add(yearCheck,          x = 1,  y = yp, w = lw, h = 4)
+        add(yearInput,          x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(trackCheck,         x = 1,      y = yp, w = lw, h = 4)
-        add(trackInput,         x = lw + 2, y = yp, w = -1, h = 4)
+        add(trackCheck,         x = 1,  y = yp, w = lw, h = 4)
+        add(trackInput,         x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(commentCheck,       x = 1,      y = yp, w = lw, h = 4)
-        add(commentInput,       x = lw + 2, y = yp, w = -1, h = 4)
+        add(commentCheck,       x = 1,  y = yp, w = lw, h = 4)
+        add(commentInput,       x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(composerCheck,      x = 1,      y = yp, w = lw, h = 4)
-        add(composerInput,      x = lw + 2, y = yp, w = -1, h = 4)
+        add(composerCheck,      x = 1,  y = yp, w = lw, h = 4)
+        add(composerInput,      x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(encoderCheck,       x = 1,      y = yp, w = lw, h = 4)
-        add(encoderInput,       x = lw + 2, y = yp, w = -1, h = 4)
+        add(encoderCheck,       x = 1,  y = yp, w = lw, h = 4)
+        add(encoderInput,       x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(coverCheck,         x = 1,      y = yp, w = lw, h = 4)
-        add(coverIcon,          x = lw + 2, y = yp, w = -1, h = (Constants.ICON_SIZE / (Swing.defFont.size / 2)) + 4)
-
-        yp = -25
-        add(loadCoverButton,    x = 1,      y = yp, w = -1, h = 4)
+        add(coverCheck,         x = 1,  y = yp, w = lw, h = 4)
+        add(coverSize,          x = rw, y = yp, w = -1, h = 4)
 
         yp += 5
-        add(applyButton,        x = 1,      y = yp, w = -1, h = 4)
+        add(coverIcon,          x = rw, y = yp, w = -1, h = (240 / Swing.defFont.size) * 2)
+
+        yp = -28
+        add(loadCoverButton,    x = 1,  y = yp, w = -1, h = 4)
 
         yp += 5
-        add(undoButton,         x = 1,      y = yp, w = -1, h = 4)
+        add(applyButton,        x = 1,  y = yp, w = -1, h = 4)
 
         yp += 5
-        add(resetButton,        x = 1, y = yp, w = -1, h = 4)
+        add(resetButton,        x = 1,  y = yp, w = -1, h = 4)
+
+        yp += 6
+        add(separator,          x = 1,  y = yp, w = -1, h = 1)
+
+        yp += 2
+        add(undoButton,         x = 1,  y = yp, w = -1, h = 4)
 
         yp += 5
-        add(saveButton,         x = 1, y = yp, w = -1, h = 4)
+        add(saveButton,         x = 1, y = yp,  w = -1, h = 4)
 
         albumArtistCheck.toolTipText  = Constants.TOOL_ALBUM_ARTIST
         albumCheck.toolTipText        = Constants.TOOL_ALBUM
@@ -134,30 +153,45 @@ class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.
         resetButton.toolTipText       = Constants.TOOL_RESET
         saveButton.toolTipText        = Constants.TOOL_SAVE
         trackCheck.toolTipText        = Constants.TOOL_START_TRACK
+        trackInput.toolTipText        = Constants.TOOL_TRACK
         undoButton.toolTipText        = Constants.TOOL_UNDO
         yearCheck.toolTipText         = Constants.TOOL_SET_YEAR
+        yearInput.toolTipText         = Constants.TOOL_YEAR
 
         reset()
+
+        /**
+         *
+         */
+        coverIcon.addMouseListener(object : MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent?) {
+                ShowImageFile(imageFile = coverName, title = coverName).isVisible = true
+            }
+        })
 
         /**
          * Load cover image for icon.
          */
         loadCoverButton.addActionListener {
-            val dlg  = ImageFileDialog(pref.picPath, Main.window)
+            val dlg  = ImageFileDialog(Main.pref.picPath, Main.window)
             val file = dlg.file
 
             coverFile = null
 
             try {
                 if (file != null && file.isFile) {
-                    coverIcon.icon = Data.loadIconFromFile(file)
-                    coverFile      = file
-
-                    pref.picPath = file.parentFile.canonicalPath
+                    val (icon, label) = Data.loadIconFromFile(file)
+                    coverIcon.icon    = icon
+                    coverSize.text    = label
+                    coverFile         = file
+                    coverName         = file.toString()
+                    Main.pref.picPath = file.parentFile.canonicalPath
                 }
             }
             catch (e: Exception) {
-                coverIcon.icon = Data.loadIconFromPath()
+                val (icon, label) = Data.loadIconFromPath()
+                coverIcon.icon = icon
+                coverSize.text = ""
                 Data.message   = e.message ?: ""
             }
             finally {
@@ -192,8 +226,12 @@ class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.
          * Reset all changes to the tracks that has not been saved.
          */
         undoButton.addActionListener {
-            Data.copyTagsFromAudio()
-            Data.sendUpdate(TrackEvent.LIST_UPDATED)
+            val answer = MessageDialog.askOkCancel(label = Constants.MESSAGE_ASK_UNDO)
+
+            if (answer == YesNoCancel.YES) {
+                Data.copyTagsFromAudio()
+                Data.sendUpdate(TrackEvent.LIST_UPDATED)
+            }
         }
 
         /**
@@ -203,11 +241,13 @@ class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.
             override fun update(event: TrackEvent) {
                 if (event == TrackEvent.ITEM_DIRTY) {
                     saveButton.isEnabled = Data.isAnyChangedAndSelected
+                    undoButton.isEnabled = saveButton.isEnabled
                 }
                 else if (event == TrackEvent.LIST_UPDATED) {
                     applyButton.isEnabled = Data.tracks.isNotEmpty()
                     undoButton.isEnabled  = Data.tracks.isNotEmpty()
                     saveButton.isEnabled  = Data.isAnyChangedAndSelected
+                    undoButton.isEnabled  = saveButton.isEnabled
                 }
             }
         })
@@ -238,7 +278,7 @@ class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.
         encoderCheck.isSelected     = false
         encoderInput.text           = ""
         coverCheck.isSelected       = false
-        coverIcon.icon              = Data.loadIconFromPath()
+        coverIcon.icon              = Data.loadIconFromPath().first
     }
 
     /**
@@ -247,16 +287,16 @@ class Options(private val pref: Preferences) : LayoutPanel(size = Swing.defFont.
     private fun values(): Map<String, String> {
         val map = mutableMapOf<String, String>()
 
-        if (artistCheck.isSelected == true)      map["artist"]       = artistInput.text
-        if (albumCheck.isSelected == true)       map["album"]        = albumInput.text
-        if (albumArtistCheck.isSelected == true) map["album_artist"] = albumArtistInput.text
-        if (genreCheck.isSelected == true)       map["genre"]        = genreCombo.text
-        if (yearCheck.isSelected == true)        map["year"]         = yearInput.text
-        if (trackCheck.isSelected == true)       map["track"]        = trackInput.text
-        if (commentCheck.isSelected == true)     map["comment"]      = commentInput.text
-        if (composerCheck.isSelected == true)    map["composer"]     = composerInput.text
-        if (encoderCheck.isSelected == true)     map["encoder"]      = encoderInput.text
-        if (coverCheck.isSelected == true)       map["cover"]        = coverFile?.canonicalPath ?: ""
+        if (artistCheck.isSelected == true)      map["artist"]                 = artistInput.text
+        if (albumCheck.isSelected == true)       map["album"]                  = albumInput.text
+        if (albumArtistCheck.isSelected == true) map["album_artist"]           = albumArtistInput.text
+        if (genreCheck.isSelected == true)       map["genre"]                  = genreCombo.text
+        if (yearCheck.isSelected == true)        map["year"]                   = yearInput.text
+        if (trackCheck.isSelected == true)       map["track"]                  = trackInput.text
+        if (commentCheck.isSelected == true)     map["comment"]                = commentInput.text
+        if (composerCheck.isSelected == true)    map["composer"]               = composerInput.text
+        if (encoderCheck.isSelected == true)     map["encoder"]                = encoderInput.text
+        if (coverCheck.isSelected == true)       map[Constants.COVER_EMBEDDED] = coverFile?.canonicalPath ?: ""
 
         if (copyCheck.isSelected == true) {
             map["copy_artist"] = when (copyCombo.selectedIndex) {

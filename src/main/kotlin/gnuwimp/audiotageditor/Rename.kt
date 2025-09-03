@@ -25,40 +25,65 @@ fun String.number(formatType: String, seperator: String, number: Int) : String =
 /**
  * Rename album tags.
  */
-fun Track.renameAlbum(options: Map<String, String>, index: Int) {
-    this.artist      = options.getOrElse(key = "artist") { this.artist }
-    this.album       = options.getOrElse(key = "album") { this.album }
-    this.albumArtist = options.getOrElse(key = "album_artist") { this.albumArtist }
-    this.genre       = options.getOrElse(key = "genre") { this.genre }
-    this.year        = options.getOrElse(key = "year") { this.year }
-    this.comment     = options.getOrElse(key = "comment") { this.comment }
-    this.composer    = options.getOrElse(key = "composer") { this.composer }
-    this.encoder     = options.getOrElse(key = "encoder") { this.encoder }
-    this.cover       = options.getOrElse(key = "cover") { this.cover }
+fun Track.renameAlbum(options: Map<String, String>, index: Int): Int {
+    val artist2      = artist
+    val album2       = album
+    val albumArtist2 = albumArtist
+    val genre2       = genre
+    val year2        = year
+    val comment2     = comment
+    val composer2    = composer
+    val encoder2     = encoder
+    val cover2       = cover
+    val track2       = track
+
+    artist      = options.getOrElse(key = "artist") { artist }
+    album       = options.getOrElse(key = "album") { album }
+    albumArtist = options.getOrElse(key = "album_artist") { albumArtist }
+    genre       = options.getOrElse(key = "genre") { genre }
+    year        = options.getOrElse(key = "year") { year }
+    comment     = options.getOrElse(key = "comment") { comment }
+    composer    = options.getOrElse(key = "composer") { composer }
+    encoder     = options.getOrElse(key = "encoder") { encoder }
+    cover       = options.getOrElse(key = Constants.COVER_EMBEDDED) { cover }
 
     when (options["copy_artist"]) {
         null -> Unit
-        "artist_to_albumartist" ->       this.albumArtist = this.artist
-        "album_to_albumartist" ->        this.albumArtist = this.album
-        "artist+album_to_albumartist" -> this.albumArtist = this.artist + " - " + this.album
-        "albumartist_to_artist" ->       this.artist      = this.albumArtist
-        "albumartist_to_album" ->        this.album       = this.albumArtist
+        "artist_to_albumartist" ->       albumArtist = artist
+        "album_to_albumartist" ->        albumArtist = album
+        "artist+album_to_albumartist" -> albumArtist = "$artist - $album"
+        "albumartist_to_artist" ->       artist      = albumArtist
+        "albumartist_to_album" ->        album       = albumArtist
         else -> Unit
     }
 
     val num = options["track"]?.numOrZero ?: 0
 
     if (num > 0) {
-        this.track = "${num + index}"
+        track = "${num + index}"
     }
+
+    return if (artist2 != artist ||
+        album2 != album ||
+        albumArtist2 != albumArtist ||
+        genre2 != genre ||
+        year2 != year ||
+        comment2 != comment ||
+        composer2 != composer ||
+        encoder2 != encoder ||
+        cover2 != cover ||
+        track2 != track)
+        1 else 0
 }
 
 /**
  * Rename file name.
  */
-fun Track.renameFile(options: Map<String, String>) {
-    var name = fileName
-    var ext  = fileExt
+fun Track.renameFile(options: Map<String, String>): Int {
+    var name  = fileName
+    var ext   = fileExt
+    val name2 = fileName
+    val ext2  = fileExt
 
     if (options["title"] != null) {
         name = title
@@ -147,13 +172,16 @@ fun Track.renameFile(options: Map<String, String>) {
     }
 
     fileExt = ext
+
+    return if (fileName != name2 || fileExt != ext2) 1 else 0
 }
 
 /**
  * Rename title tag.
  */
-fun Track.renameTitle(options: Map<String, String>) {
-    var title = this.title
+fun Track.renameTitle(options: Map<String, String>): Int {
+    var title  = this.title
+    val title2 = this.title
 
     if (options["filename"] != null) {
         title = fileName
@@ -228,4 +256,6 @@ fun Track.renameTitle(options: Map<String, String>) {
     }
 
     this.title = title
+
+    return if (title != title2) 1 else 0
 }

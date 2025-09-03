@@ -17,6 +17,17 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
+/***
+ *      ______ _ _      _____        __
+ *     |  ____(_) |    |_   _|      / _|
+ *     | |__   _| | ___  | |  _ __ | |_ ___
+ *     |  __| | | |/ _ \ | | | '_ \|  _/ _ \
+ *     | |    | | |  __/_| |_| | | | || (_) |
+ *     |_|    |_|_|\___|_____|_| |_|_| \___/
+ *
+ *
+ */
+
 /**
  * A file information object.
  * Create an object with filename, and it will load all stat from the file.
@@ -26,10 +37,11 @@ class FileInfo(pathname: String) {
      * Options for reading files from a directory.
      */
     enum class ReadDirOption {
-        FILES_ONLY_IN_START_DIRECTORY,  /** Only files in root directory */
-        ALL_IN_START_DIRECTORY,         /** Files and directories in root directory */
-        ALL_RECURSIVE,                  /** Files and directories in all child directories */
-        ALL_RECURSIVE_AND_DIRLINKS,     /** Files and directories in all child directories including links to directories*/
+        FILES,                      /** Only files in start directory */
+        DIRS,                       /** Directories in start directory */
+        FILES_AND_DIRS,             /** Files and directories in start directory */
+        RECURSIVE,                  /** Files and directories in all child directories */
+        RECURSIVE_WITH_DIRLINKS,    /** Files and directories in all child directories including directory links */
     }
 
     /**
@@ -51,7 +63,7 @@ class FileInfo(pathname: String) {
     var mod: FileTime   = FileTime.fromMillis(0); private set
     var name            = "";                     private set
     var path            = "";                     private set
-    var realname        = "";                     private set
+    var linkname        = "";                     private set
     var size            = 0L;                     private set
     var type            = Type.MISSING;           private set
     var canRead         = false;                  private set
@@ -63,66 +75,78 @@ class FileInfo(pathname: String) {
      * Most exceptions are caught.
      */
     init {
-        val file = File(pathname)
+        if (pathname.isBlank() == false) {
+            val file = File(pathname)
 
-        filename   = file.absolutePath
-        name       = file.name
-        ext        = file.extension
-        canRead    = file.canRead()
-        canWrite   = file.canWrite()
-        canExecute = file.canExecute()
+            filename   = file.absolutePath
+            name       = file.name
+            ext        = file.extension
+            canRead    = file.canRead()
+            canWrite   = file.canWrite()
+            canExecute = file.canExecute()
 
-        filepath = try {
-            FileSystems.getDefault().getPath(filename)
-        }
-        catch (e: Exception) {
-            null
-        }
-
-        try {
-            val tmp = filepath
-
-            if (tmp != null) {
-                path     = tmp.parent.toAbsolutePath().toString()
-                realname = tmp.toRealPath().toString()
-                isLink   =  try {
-                    Files.readSymbolicLink(tmp)
-                    true
+            try {
+                filepath = try {
+                    FileSystems.getDefault().getPath(filename)
                 }
-                catch (e: Exception) {
-                    false
+                catch (_: Exception) {
+                    null
                 }
 
-                val attr1 = if (isUnix == true) Files.readAttributes(tmp, PosixFileAttributes::class.java) else Files.readAttributes(tmp, DosFileAttributes::class.java)
+                if (filepath == null && isUnix == false && filename.substring(1) == ":\\") {
+                    filepath = file.toPath()
+                }
 
-                if (attr1 != null) {
-                    val tmpMod = attr1.lastModifiedTime()
+                val tmp = filepath
 
-                    if (isUnix == false && isLink == false) {
-                        isLink = try {
-                            val attr2 = Files.readAttributes(tmp, DosFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
-                            attr2.isDirectory == true && attr2.isOther == true
-                        }
-                        catch (e: Exception) {
-                            isLink
-                        }
+                if (tmp != null) {
+                    path = try {
+                        tmp.parent.toAbsolutePath().toString()
+                    }
+                    catch (_: Exception) {
+                        ""
                     }
 
-                    size = attr1.size()
-                    iso  = extractDate(tmpMod.toString())
-                    liso = extractDate(LocalDateTime.ofInstant(tmpMod.toInstant(), ZoneId.systemDefault()).toString())
-                    mod  = tmpMod
-                    type = when {
-                        attr1.isRegularFile -> Type.FILE
-                        attr1.isDirectory -> Type.DIR
-                        attr1.isOther -> Type.OTHER
-                        else -> Type.MISSING
+                    linkname = tmp.toRealPath().toString()
+                    isLink   =  try {
+                        Files.readSymbolicLink(tmp)
+                        true
+                    }
+                    catch (e: Exception) {
+                        false
+                    }
+
+                    val attr1 = if (isUnix == true) Files.readAttributes(tmp, PosixFileAttributes::class.java) else Files.readAttributes(tmp, DosFileAttributes::class.java)
+
+                    if (attr1 != null) {
+                        val tmpMod = attr1.lastModifiedTime()
+
+                        if (isUnix == false && isLink == false) {
+                            isLink = try {
+                                val attr2 = Files.readAttributes(tmp, DosFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+                                attr2.isDirectory == true && attr2.isOther == true
+                            }
+                            catch (e: Exception) {
+                                isLink
+                            }
+                        }
+
+                        size = attr1.size()
+                        iso  = extractDate(tmpMod.toString())
+                        liso = extractDate(LocalDateTime.ofInstant(tmpMod.toInstant(), ZoneId.systemDefault()).toString())
+                        mod  = tmpMod
+                        type = when {
+                            attr1.isRegularFile -> Type.FILE
+                            attr1.isDirectory -> Type.DIR
+                            attr1.isOther -> Type.OTHER
+                            else -> Type.MISSING
+                        }
                     }
                 }
             }
-        }
-        catch (e: Exception) {
-            type = Type.MISSING
+            catch (_: Exception) {
+                type = Type.MISSING
+            }
         }
     }
 
@@ -167,7 +191,7 @@ class FileInfo(pathname: String) {
      */
     val isCircular: Boolean
         get() {
-            val name = realname + File.separator
+            val name = linkname + File.separator
             return isLink == true && filename.indexOf(name) == 0
         }
 
@@ -186,6 +210,11 @@ class FileInfo(pathname: String) {
      * Can be an invalid link if file has been created by readDir.
      */
     val isMissing: Boolean = type == Type.MISSING
+
+    /**
+     * Is top or root directory?.
+     */
+    val isTop: Boolean = path == "" && type == Type.DIR
 
     /**
      * Type string.
@@ -216,7 +245,7 @@ class FileInfo(pathname: String) {
     /**
      * Read files in this directory.
      */
-    fun readDir(option: ReadDirOption = ReadDirOption.ALL_IN_START_DIRECTORY): List<FileInfo> {
+    fun readDir(option: ReadDirOption = ReadDirOption.FILES_AND_DIRS): List<FileInfo> {
         val path = filepath
 
         return if (path != null) {
@@ -230,12 +259,32 @@ class FileInfo(pathname: String) {
     }
 
     /**
+     * Read files in this directory.
+     */
+    fun readDirFile(option: ReadDirOption = ReadDirOption.FILES_AND_DIRS): Array<File?> {
+        val files = readDir(option)
+        val res   = Array<File?>(files.size) { null }
+        var count = 0
+
+        files.forEach {
+            try {
+                res[count] = it.file
+                count++
+            }
+            catch (_: Exception) {
+            }
+        }
+
+        return res
+    }
+
+    /**
      * Remove a file or directory (with option to do delete all child files/directories).
      */
     fun remove(recursive: Boolean = false, checkExist: Boolean = true): Boolean {
         return try {
             if (isDir == true && recursive == true) {
-                readDir(ReadDirOption.ALL_RECURSIVE).asReversed().forEach {
+                readDir(ReadDirOption.RECURSIVE).asReversed().forEach {
                     it.file.remove(checkExist = checkExist)
                 }
 
@@ -267,6 +316,12 @@ class FileInfo(pathname: String) {
     }
 
     companion object {
+        /**
+         * Return home directory.
+         */
+        val homedir: FileInfo
+            get() =  FileInfo(System.getProperty("user.home"))
+
         /**
          * Return true path if case-sensitive.
          * It has to write to a file to test it
@@ -302,8 +357,32 @@ class FileInfo(pathname: String) {
         /**
          * Return true if java is running in a unix like operating system.
          */
+        val isLinux: Boolean
+            get() = System.getProperty("os.name").lowercase().contains("linux") == true
+
+        /**
+         * Return true if java is running in a unix like operating system.
+         */
         val isUnix: Boolean
             get() = System.getProperty("os.name").lowercase().contains("windows") == false
+
+        /**
+         * Return true if java is running in windows
+         */
+        val isWindows: Boolean
+            get() = System.getProperty("os.name").lowercase().contains("windows") == true
+
+        /**
+         * Return os name
+         */
+        val os: String
+            get() = System.getProperty("os.name")
+
+        /**
+         * Return current work path.
+         */
+        val workdir: FileInfo
+            get() =  FileInfo(Paths.get("").toAbsolutePath().toString())
 
         /**
          * Return true if java is running in a unix like operating system.
@@ -324,12 +403,14 @@ class FileInfo(pathname: String) {
             return res
         }
 
-        //----------------------------------------------------------------------
+        /**
+         * Extract date and time from string.
+         */
         private fun extractDate(date: String): String {
             var res = ""
 
             if (date.length > 9) {
-                res += date.substring(0, 10)
+                res += date.take(10)
                 res += " "
             }
 
@@ -348,16 +429,18 @@ class FileInfo(pathname: String) {
          * Callback for file visitor.
          */
         class FileVisitor(val path: Path, val files: MutableList<FileInfo>, val option: ReadDirOption) : SimpleFileVisitor<Path>() {
-            //------------------------------------------------------------------
-            override fun preVisitDirectory(dir: Path?, attrs: BasicFileAttributes?): FileVisitResult {
+            /**
+             *
+             */
+            override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
                 if (path != dir) {
                     val fi = readDirAddFile(files, dir, option)
 
                     if (fi != null) {
-                        if (fi.isLink == true && option == ReadDirOption.ALL_RECURSIVE) {
+                        if (fi.isLink == true && option == ReadDirOption.RECURSIVE) {
                             return FileVisitResult.SKIP_SUBTREE
                         }
-                        else if (fi.isCircular == true && option == ReadDirOption.ALL_RECURSIVE_AND_DIRLINKS) {
+                        else if (fi.isCircular == true && option == ReadDirOption.RECURSIVE_WITH_DIRLINKS) {
                             return FileVisitResult.SKIP_SUBTREE
                         }
                     }
@@ -366,46 +449,59 @@ class FileInfo(pathname: String) {
                 return super.preVisitDirectory(dir, attrs)
             }
 
-            //------------------------------------------------------------------
-            override fun visitFile(file: Path?, attrs: BasicFileAttributes?): FileVisitResult {
+            /**
+             * Add file.
+             */
+            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
                 readDirAddFile(files, file, option)
                 return super.visitFile(file, attrs)
             }
 
-            //------------------------------------------------------------------
-            override fun visitFileFailed(file: Path?, exc: IOException?): FileVisitResult {
+            /**
+             *
+             */
+            override fun visitFileFailed(file: Path, exc: IOException): FileVisitResult {
                 readDirAddFile(files, file, option)
                 return FileVisitResult.SKIP_SUBTREE
             }
 
-            //------------------------------------------------------------------
-            override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult {
+            /**
+             *
+             */
+            override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
                 return super.postVisitDirectory(dir, exc)
             }
         }
 
-        //----------------------------------------------------------------------
+        /**
+         * Read files and directories.
+         */
         private fun readDir(files: MutableList<FileInfo>, path: Path, option: ReadDirOption) {
             val visitor  = FileVisitor(path, files, option)
             val set      = mutableSetOf<FileVisitOption>()
-            val maxDepth = if (option == ReadDirOption.ALL_IN_START_DIRECTORY || option == ReadDirOption.FILES_ONLY_IN_START_DIRECTORY) 1 else Int.MAX_VALUE
+            val maxDepth = if (option == ReadDirOption.FILES_AND_DIRS || option == ReadDirOption.FILES || option == ReadDirOption.DIRS) 1 else Int.MAX_VALUE
 
-            if (option == ReadDirOption.ALL_RECURSIVE_AND_DIRLINKS) {
+            if (option == ReadDirOption.RECURSIVE_WITH_DIRLINKS) {
                 set.add(FOLLOW_LINKS)
             }
 
             Files.walkFileTree(path, set, maxDepth, visitor)
         }
 
-        //----------------------------------------------------------------------
+        /**
+         * Add file to list.
+         */
         private fun readDirAddFile(files: MutableList<FileInfo>, file: Path?, option: ReadDirOption): FileInfo? {
             return if (file != null) {
                 val fi = FileInfo(file.toString())
 
-                if ((fi.isFile == true || fi.isMissing == true) && option == ReadDirOption.FILES_ONLY_IN_START_DIRECTORY) {
+                if ((fi.isFile == true || fi.isMissing == true) && option == ReadDirOption.FILES) {
                     files.add(fi)
                 }
-                else if (option != ReadDirOption.FILES_ONLY_IN_START_DIRECTORY) {
+                else if (fi.isDir == true && option == ReadDirOption.DIRS) {
+                    files.add(fi)
+                }
+                else if (option != ReadDirOption.FILES && option != ReadDirOption.DIRS) {
                     files.add(fi)
                 }
 

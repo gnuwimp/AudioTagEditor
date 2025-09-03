@@ -3,24 +3,26 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor.file
+package gnuwimp.audiotageditor
 
-import gnuwimp.audiotageditor.Constants
-import gnuwimp.audiotageditor.Data
-import gnuwimp.audiotageditor.TrackEvent
-import gnuwimp.audiotageditor.TrackListener
-import gnuwimp.swing.ComboBox
-import gnuwimp.swing.LayoutPanel
-import gnuwimp.swing.Swing
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JLabel
-import javax.swing.JTextField
+import gnuwimp.swing.*
+import javax.swing.*
+
+/***
+ *      ______ _ _       ____        _   _
+ *     |  ____(_) |     / __ \      | | (_)
+ *     | |__   _| | ___| |  | |_ __ | |_ _  ___  _ __  ___
+ *     |  __| | | |/ _ \ |  | | '_ \| __| |/ _ \| '_ \/ __|
+ *     | |    | | |  __/ |__| | |_) | |_| | (_) | | | \__ \
+ *     |_|    |_|_|\___|\____/| .__/ \__|_|\___/|_| |_|___/
+ *                            | |
+ *                            |_|
+ */
 
 /**
  * Options panel for renaming files.
  */
-class Options : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+class FileOptions : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val appendTextCheck     = JCheckBox(Constants.LABEL_APPEND_TEXT)
     private val appendTextInput     = JTextField()
     private val applyButton         = JButton(Constants.LABEL_PREVIEW_CHANGES)
@@ -50,9 +52,13 @@ class Options : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val saveButton          = JButton(Constants.LABEL_SAVE)
     private val setFileNameCheck    = JCheckBox(Constants.LABEL_SET_FILENAME)
     private val setFileNameInput    = JTextField()
+    private val separator           = JSeparator()
     private val undoButton          = JButton(Constants.LABEL_UNDO)
     private val useTitleCheck       = JCheckBox(Constants.LABEL_USE_TITLE)
 
+    /**
+     *
+     */
     init {
         val lw = 24
         var yp = 1
@@ -115,14 +121,17 @@ class Options : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         yp += 5
         add(removeIllegalCheck,     x = 1,      y = yp, w = -1, h = 4)
 
-        yp = -20
+        yp = -23
         add(applyButton,            x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
-        add(undoButton,             x = 1,      y = yp, w = -1, h = 4)
-
-        yp += 5
         add(resetButton,            x = 1,      y = yp, w = -1, h = 4)
+
+        yp += 6
+        add(separator,              x = 1,      y = yp, w = -1, h = 1)
+
+        yp += 2
+        add(undoButton,             x = 1,      y = yp, w = -1, h = 4)
 
         yp += 5
         add(saveButton,             x = 1,      y = yp, w = -1, h = 4)
@@ -175,8 +184,12 @@ class Options : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
          * Reset all changes to the tracks.
          */
         undoButton.addActionListener {
-            Data.copyTagsFromAudio()
-            Data.sendUpdate(TrackEvent.LIST_UPDATED)
+            val answer = MessageDialog.askOkCancel(label = Constants.MESSAGE_ASK_UNDO)
+
+            if (answer == YesNoCancel.YES) {
+                Data.copyTagsFromAudio()
+                Data.sendUpdate(TrackEvent.LIST_UPDATED)
+            }
         }
 
         /**
@@ -186,13 +199,14 @@ class Options : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
             override fun update(event: TrackEvent) {
                 when (event) {
                     TrackEvent.ITEM_DIRTY -> saveButton.isEnabled = Data.isAnyChangedAndSelected
+                    TrackEvent.ITEM_IMAGE -> Unit
+                    TrackEvent.ITEM_SELECTED -> Unit
                     TrackEvent.LIST_UPDATED -> {
                         applyButton.isEnabled = Data.tracks.isNotEmpty()
                         undoButton.isEnabled  = Data.tracks.isNotEmpty()
                         saveButton.isEnabled  = Data.isAnyChangedAndSelected
+                        undoButton.isEnabled  = saveButton.isEnabled
                     }
-                    TrackEvent.ITEM_SELECTED -> Unit
-                    TrackEvent.ITEM_IMAGE -> Unit
                 }
             }
         })

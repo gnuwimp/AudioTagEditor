@@ -14,6 +14,17 @@ import java.lang.reflect.Proxy
 import javax.swing.JFrame
 import javax.swing.UIManager
 
+/***
+ *       ____        _ _   _    _                 _ _
+ *      / __ \      (_) | | |  | |               | | |
+ *     | |  | |_   _ _| |_| |__| | __ _ _ __   __| | | ___ _ __
+ *     | |  | | | | | | __|  __  |/ _` | '_ \ / _` | |/ _ \ '__|
+ *     | |__| | |_| | | |_| |  | | (_| | | | | (_| | |  __/ |
+ *      \___\_\\__,_|_|\__|_|  |_|\__,_|_| |_|\__,_|_|\___|_|
+ *
+ *
+ */
+
 /**
  * Quit handler, mostly for macOS
  */
@@ -27,9 +38,16 @@ class QuitHandler(val quit: () -> Unit) : InvocationHandler {
     }
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *               _                 _   _    _                 _ _
+ *         /\   | |               | | | |  | |               | | |
+ *        /  \  | |__   ___  _   _| |_| |__| | __ _ _ __   __| | | ___ _ __
+ *       / /\ \ | '_ \ / _ \| | | | __|  __  |/ _` | '_ \ / _` | |/ _ \ '__|
+ *      / ____ \| |_) | (_) | |_| | |_| |  | | (_| | | | | (_| | |  __/ |
+ *     /_/    \_\_.__/ \___/ \__,_|\__|_|  |_|\__,_|_| |_|\__,_|_|\___|_|
+ *
+ *
+ */
 
 /**
  * About handler, mostly for macOS.
@@ -46,7 +64,7 @@ class AboutHandler(val appName: String, val aboutText: String) : InvocationHandl
     /**
      * Show about dialog.
      */
-    fun show(width: Int = Swing.defFont.size * 60, height: Int = Swing.defFont.size * 40) {
+    fun show(width: Int = Swing.defFont.size * 60, height: Int = Swing.defFont.size * 50) {
         val dialog = HTMLDialog(html = aboutText, title = appName, width = width, height = height)
         dialog.isVisible = true
     }
@@ -54,15 +72,22 @@ class AboutHandler(val appName: String, val aboutText: String) : InvocationHandl
     /**
      * Show about dialog.
      */
-    fun show(parent: JFrame, width: Int = Swing.defFont.size * 60, height: Int = Swing.defFont.size * 40) {
+    fun show(parent: JFrame, width: Int = Swing.defFont.size * 60, height: Int = Swing.defFont.size * 50) {
         val dialog = HTMLDialog(html = aboutText, title = appName, parent = parent, width = width, height = height)
         dialog.isVisible = true
     }
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *       _____         _
+ *      / ____|       (_)
+ *     | (_____      ___ _ __   __ _
+ *      \___ \ \ /\ / / | '_ \ / _` |
+ *      ____) \ V  V /| | | | | (_| |
+ *     |_____/ \_/\_/ |_|_| |_|\__, |
+ *                              __/ |
+ *                             |___/
+ */
 
 /**
  * Initiate GUI stuff.

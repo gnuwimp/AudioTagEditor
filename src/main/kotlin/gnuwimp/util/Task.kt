@@ -5,6 +5,17 @@
 
 package gnuwimp.util
 
+/***
+ *      _______        _ _______ _                        _
+ *     |__   __|      | |__   __| |                      | |
+ *        | | __ _ ___| | _| |  | |__  _ __ ___  __ _  __| |
+ *        | |/ _` / __| |/ / |  | '_ \| '__/ _ \/ _` |/ _` |
+ *        | | (_| \__ \   <| |  | | | | | |  __/ (_| | (_| |
+ *        |_|\__,_|___/_|\_\_|  |_| |_|_|  \___|\__,_|\__,_|
+ *
+ *
+ */
+
 /**
  * Thread to run Task objects
  */
@@ -26,15 +37,23 @@ class TaskThread(val task: Task) : Thread() {
     }
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _______        _
+ *     |__   __|      | |
+ *        | | __ _ ___| | __
+ *        | |/ _` / __| |/ /
+ *        | | (_| \__ \   <
+ *        |_|\__,_|___/_|\_\
+ *
+ *
+ */
 
 /**
  * Base class for objects running in Progress
  * It will be executed in a thread
  * Max valuse has to be larger than 0
  */
+@Suppress("EmptyMethod")
 abstract class Task(val max: Long = 100) {
     private var messageString = ""
 
@@ -97,9 +116,16 @@ abstract class Task(val max: Long = 100) {
     override fun toString() = "status=$status, max=${String.format("%6d", max)}, progress=${String.format("%6d", progress)}, error='$error'"
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _      _     _     _________        _    __
+ *     | |    (_)   | |   / /__   __|      | |   \ \
+ *     | |     _ ___| |_ / /   | | __ _ ___| | __ \ \
+ *     | |    | / __| __< <    | |/ _` / __| |/ /  > >
+ *     | |____| \__ \ |_ \ \   | | (_| \__ \   <  / /
+ *     |______|_|___/\__| \_\  |_|\__,_|___/_|\_\/_/
+ *
+ *
+ */
 
 /**
  * Return a list of objects that has failed
@@ -139,16 +165,25 @@ fun List<Task>.throwFirstError() {
     }
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _______        _    __  __
+ *     |__   __|      | |  |  \/  |
+ *        | | __ _ ___| | _| \  / | __ _ _ __   __ _  __ _  ___ _ __
+ *        | |/ _` / __| |/ / |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__|
+ *        | | (_| \__ \   <| |  | | (_| | | | | (_| | (_| |  __/ |
+ *        |_|\__,_|___/_|\_\_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
+ *                                                    __/ |
+ *                                                   |___/
+ */
 
 /**
  * A task manager object.
  * It uses Task objects to calculate progress values and execute task(s) in thread(s).
  * Thread count can't be more than task count.
  */
-open class TaskManager(val tasks: List<Task>, val threadCount: Int = 1, val onError: Execution = Execution.CONTINUE, val onCancel: Execution = Execution.STOP_JOIN) {
+open class TaskManager(val tasks: List<Task>, val maxThreads: Int = 1, val onError: Execution = Execution.CONTINUE, val onCancel: Execution = Execution.STOP_JOIN) {
+    var runningThreads = 0
+
     /**
      * Flags for Progress actions when running threads
      */
@@ -160,6 +195,12 @@ open class TaskManager(val tasks: List<Task>, val threadCount: Int = 1, val onEr
 
     val total: Long
     private val threadList= mutableListOf<TaskThread?>()
+
+    /**
+     * Get number of active threads
+     */
+    val activeThreads: Int
+        get() = runningThreads
 
     /**
      * Return percent value, between 0 and 100
@@ -175,11 +216,11 @@ open class TaskManager(val tasks: List<Task>, val threadCount: Int = 1, val onEr
 
     //--------------------------------------------------------------------------
     init {
-        require(threadCount > 0 && tasks.size > 0)
+        require(maxThreads > 0 && tasks.size > 0)
 
         total = tasks.sumByLong(Task::max)
 
-        for (f in 1..threadCount) {
+        for (f in 1..maxThreads) {
             threadList.add(null)
         }
     }
@@ -220,7 +261,9 @@ open class TaskManager(val tasks: List<Task>, val threadCount: Int = 1, val onEr
      * Run all tasks in thread(s)
      * Returns false if it has stopped because of error or no more tasks to run
      */
-    fun run(cancel: Boolean = false): Boolean {
+    fun run(userAbort: Boolean = false): Boolean {
+        runningThreads = 0
+
         val failed = threadList.any {
             it?.task?.status == Task.Status.ERROR
         }
@@ -229,7 +272,7 @@ open class TaskManager(val tasks: List<Task>, val threadCount: Int = 1, val onEr
             stopThreads(onError)
             return false
         }
-        else if (cancel == true) {
+        else if (userAbort == true) {
             stopThreads(onCancel)
             return false
         }
@@ -259,6 +302,10 @@ open class TaskManager(val tasks: List<Task>, val threadCount: Int = 1, val onEr
                         }
                     }
                 }
+
+                if (threadList[i] != null) {
+                    runningThreads++
+                }
             }
 
             return tasks.any {
@@ -280,7 +327,7 @@ open class TaskManager(val tasks: List<Task>, val threadCount: Int = 1, val onEr
 
         Thread.sleep(1_000)
 
-        for (i in 0 until threadCount) {
+        for (i in 0 until maxThreads) {
             threadList[i]?.let { thread ->
                 if (stop == Execution.STOP_JOIN) {
                     thread.join()

@@ -5,17 +5,25 @@
 
 package gnuwimp.audiotageditor
 
-import gnuwimp.swing.StatusBar
-import gnuwimp.swing.Swing
-import gnuwimp.swing.fontForAll
+import gnuwimp.swing.*
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.util.prefs.Preferences
 import javax.swing.*
 import kotlin.system.exitProcess
+
+/***
+ *      __  __       _   __          ___           _
+ *     |  \/  |     (_)  \ \        / (_)         | |
+ *     | \  / | __ _ _ _ _\ \  /\  / / _ _ __   __| | _____      __
+ *     | |\/| |/ _` | | '_ \ \/  \/ / | | '_ \ / _` |/ _ \ \ /\ / /
+ *     | |  | | (_| | | | | \  /\  /  | | | | | (_| | (_) \ V  V /
+ *     |_|  |_|\__,_|_|_| |_|\/  \/   |_|_| |_|\__,_|\___/ \_/\_/
+ *
+ *
+ */
 
 /**
  * Main window object.
@@ -23,24 +31,26 @@ import kotlin.system.exitProcess
  * And four tab widgets to the right.
  * A splitter is between tree and tab container widget.
  */
-class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JFrame(title) {
-    private val albumOptions = gnuwimp.audiotageditor.album.Options(pref)
+class MainWindow(title: String = Constants.APP_NAME) : JFrame(title) {
+    private val albumOptions = AlbumOptions()
     private val albumTab     = JSplitPane()
-    private val albumTable   = gnuwimp.audiotageditor.album.Table()
-    private val fileOptions  = gnuwimp.audiotageditor.file.Options()
+    private val albumTable   = AlbumTable()
+    private val fileOptions  = FileOptions()
     private val fileTab      = JSplitPane()
-    private val fileTable    = gnuwimp.audiotageditor.file.Table()
-    private val leftPanel    = LeftPanel(pref)
+    private val fileTable    = FileTable()
+    private val leftPanel    = LeftPanel()
     private val main         = JPanel()
-    private val splitPane    = JSplitPane()
-    private val statusBar    = StatusBar()
+    private val centerPane   = JSplitPane()
+    private val southPane    = JSplitPane()
+    private val statBar      = StatusBar(StatusBar.Align.LEFT)
+    private val statusBar    = StatusBar(StatusBar.Align.LEFT)
     private val tabs         = JTabbedPane()
-    private val titleOptions = gnuwimp.audiotageditor.title.Options()
+    private val titleOptions = TitleOptions()
     private val titleTab     = JSplitPane()
-    private val titleTable   = gnuwimp.audiotageditor.title.Table()
-    private val trackOptions = gnuwimp.audiotageditor.track.Options(pref)
+    private val titleTable   = TitleTable()
+    private val trackOptions = TrackOptions()
     private val trackTab     = JSplitPane()
-    private val trackTable   = gnuwimp.audiotageditor.track.Table()
+    private val trackTable   = TrackTable()
     private var oldTabIndex  = 0
     private var savedState   = false
 
@@ -62,22 +72,26 @@ class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JF
             tabs.selectedComponent.invalidate()
         }
 
+    /**
+     *
+     */
     init {
-        defaultCloseOperation    = DO_NOTHING_ON_CLOSE
-        iconImage                = Main.icon
-        contentPane              = main
-        Data.messageFunc         = { value: String -> statusBar.message = value }
-        main.layout              = BorderLayout()
-        splitPane.leftComponent  = leftPanel
-        splitPane.rightComponent = tabs
-        trackTab.leftComponent   = trackOptions
-        trackTab.rightComponent  = trackTable
-        fileTab.leftComponent    = fileOptions
-        fileTab.rightComponent   = fileTable
-        albumTab.leftComponent   = albumOptions
-        albumTab.rightComponent  = albumTable
-        titleTab.leftComponent   = titleOptions
-        titleTab.rightComponent  = titleTable
+        defaultCloseOperation     = DO_NOTHING_ON_CLOSE
+        iconImage                 = Main.icon
+        contentPane               = main
+        main.layout               = BorderLayout()
+        albumTab.leftComponent    = albumOptions
+        albumTab.rightComponent   = albumTable
+        fileTab.leftComponent     = fileOptions
+        fileTab.rightComponent    = fileTable
+        centerPane.leftComponent  = leftPanel
+        centerPane.rightComponent = tabs
+        titleTab.leftComponent    = titleOptions
+        titleTab.rightComponent   = titleTable
+        trackTab.leftComponent    = trackOptions
+        trackTab.rightComponent   = trackTable
+        Data.messageFunc          = { value: String -> statusBar.errorLabel = value }
+        Data.statFunc             = { value: String -> statBar.label = value }
 
         tabs.border = BorderFactory.createEmptyBorder(5, 3, 5, 3)
         tabs.addTab(Constants.LABEL_TAB_TRACK, null, trackTab, Constants.TOOL_TAB_TRACK)
@@ -85,8 +99,12 @@ class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JF
         tabs.addTab(Constants.LABEL_TAB_TITLE, null, titleTab, Constants.TOOL_TAB_TITLE)
         tabs.addTab(Constants.LABEL_TAB_ALBUM, null, albumTab, Constants.TOOL_TAB_ALBUM)
 
-        main.add(splitPane, BorderLayout.CENTER)
-        main.add(statusBar, BorderLayout.SOUTH)
+        southPane.leftComponent = statusBar
+        southPane.rightComponent = statBar
+        southPane.preferredSize = Dimension(Swing.defFont.size * 10, Swing.defFont.size * 3)
+
+        main.add(centerPane, BorderLayout.CENTER)
+        main.add(southPane, BorderLayout.SOUTH)
 
         pack()
 
@@ -113,26 +131,28 @@ class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JF
             if (selectedTab != tab.selectedIndex) {
                 val currentRow = Data.selectedRow
 
-                when {
-                    Data.isAnyChangedAndSelected -> when (JOptionPane.showConfirmDialog(Main.window, Constants.MESSAGE_ASK_SAVE_HTML, Constants.DIALOG_SAVE, JOptionPane.YES_NO_CANCEL_OPTION)) {
-                        Constants.YES -> {
+                if (Data.isAnyChangedAndSelected == true) {
+                    val answer = MessageDialog.ask(label = Constants.MESSAGE_ASK_SAVE)
+
+                    when (answer) {
+                        YesNoCancel.YES -> {
                             selectedTab = if (Data.saveTracks()) tab.selectedIndex else selectedTab
                         }
-                        Constants.NO -> {
+                        YesNoCancel.NO -> {
                             Data.copyTagsFromAudio()
                             Data.sendUpdate(TrackEvent.LIST_UPDATED)
                             selectedTab = tab.selectedIndex
                         }
-                        Constants.CANCEL -> selectedTab = selectedTab
+                        YesNoCancel.CANCEL -> selectedTab = selectedTab
                     }
-                    Data.isAnyChanged -> {
-                        Data.copyTagsFromAudio()
-                        Data.sendUpdate(TrackEvent.LIST_UPDATED)
-                        selectedTab = tab.selectedIndex
-                    }
-                    else -> {
-                        selectedTab = tab.selectedIndex
-                    }
+                }
+                else if (Data.isAnyChanged == true) {
+                    Data.copyTagsFromAudio()
+                    Data.sendUpdate(TrackEvent.LIST_UPDATED)
+                    selectedTab = tab.selectedIndex
+                }
+                else {
+                    selectedTab = tab.selectedIndex
                 }
 
                 Data.selectedRow = currentRow
@@ -147,16 +167,41 @@ class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JF
                 quit()
             }
         })
+
+        /**
+         * Disable directory tree when any track data has been changed.
+         */
+        Data.addListener(object : TrackListener {
+            override fun update(event: TrackEvent) {
+                if (Data.isAnyChangedAndSelected == true) {
+                    leftPanel.enableTree(false)
+                    leftPanel.toolTipText(Constants.TOOL_DIRTREE_DISABLED)
+                }
+                else {
+                    leftPanel.enableTree(true)
+                    leftPanel.toolTipText(Constants.TOOL_DIRTREE_ENABLED)
+                }
+            }
+        })
+
     }
+
+    /**
+     * Focus table after a few buttons on track/Option has been pressed.
+     */
+    fun focusTrackTable() {
+        trackTable.focus()
+    }
+
 
     /**
      * Load preferences from default OS place.
      */
     fun prefLoad() {
-        val w = pref.winWidth
-        val h = pref.winHeight
-        var x = pref.winX
-        var y = pref.winY
+        val w = Main.pref.winWidth
+        val h = Main.pref.winHeight
+        var x = Main.pref.winX
+        var y = Main.pref.winY
         val sc = Toolkit.getDefaultToolkit().screenSize
 
         if (x > sc.getWidth() || x < -50) {
@@ -173,18 +218,19 @@ class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JF
         preferredSize = Dimension(w, h)
         fontForAll    = Swing.defFont
 
-        if (pref.winMax == true) {
+        if (Main.pref.winMax == true) {
             extendedState = MAXIMIZED_BOTH
         }
 
-        splitPane.dividerLocation = pref.splitDir
-        trackTab.dividerLocation  = pref.SplitTrack
-        fileTab.dividerLocation   = pref.SplitFile
-        titleTab.dividerLocation  = pref.SplitTitle
-        albumTab.dividerLocation  = pref.splitAlbum
+        albumTab.dividerLocation   = Main.pref.splitAlbum
+        centerPane.dividerLocation = Main.pref.splitDir
+        fileTab.dividerLocation    = Main.pref.splitFile
+        southPane.dividerLocation  = Main.pref.splitStatus
+        titleTab.dividerLocation   = Main.pref.splitTitle
+        trackTab.dividerLocation   = Main.pref.splitTrack
 
         validate()
-        leftPanel.restore(pref.lastPath)
+        leftPanel.restore(Main.pref.lastPath)
         Data.sendUpdate(TrackEvent.LIST_UPDATED)
     }
 
@@ -197,23 +243,25 @@ class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JF
                 val size = size
                 val pos  = location
 
-                pref.lastPath   = leftPanel.currentPath
-                pref.winWidth   = size.width
-                pref.winHeight  = size.height
-                pref.winX       = pos.x
-                pref.winY       = pos.y
-                pref.winMax     = (extendedState and MAXIMIZED_BOTH != 0)
-                pref.splitDir   = splitPane.dividerLocation
-                pref.SplitTrack = trackTab.dividerLocation
-                pref.SplitFile  = fileTab.dividerLocation
-                pref.SplitTitle = titleTab.dividerLocation
-                pref.splitAlbum = albumTab.dividerLocation
+                Main.pref.fontSize    = Swing.defFont.size
+                Main.pref.lastPath    = leftPanel.currentPath
+                Main.pref.splitAlbum  = albumTab.dividerLocation
+                Main.pref.splitDir    = centerPane.dividerLocation
+                Main.pref.splitFile   = fileTab.dividerLocation
+                Main.pref.splitStatus = southPane.dividerLocation
+                Main.pref.splitTitle  = titleTab.dividerLocation
+                Main.pref.splitTrack  = trackTab.dividerLocation
+                Main.pref.winHeight   = size.height
+                Main.pref.winMax      = (extendedState and MAXIMIZED_BOTH != 0)
+                Main.pref.winWidth    = size.width
+                Main.pref.winX        = pos.x
+                Main.pref.winY        = pos.y
 
-                pref.flush()
+                Main.pref.flush()
                 savedState = true
             }
         }
-        catch (e: Exception) {
+        catch (_: Exception) {
         }
     }
 
@@ -221,10 +269,27 @@ class MainWindow(val pref: Preferences, title: String = Constants.APP_NAME) : JF
      * Quit but ask to save if data has been changed.
      */
     fun quit() {
-        if (Data.isAnyChangedAndSelected == true && JOptionPane.showConfirmDialog(Main.window, Constants.MESSAGE_ASK_SAVE_HTML, Constants.DIALOG_SAVE, JOptionPane.YES_NO_OPTION) == Constants.YES && Data.saveTracks() == false) {
-            JOptionPane.showMessageDialog(Main.window, Constants.ERROR_SAVE_HTML, Constants.DIALOG_SAVE_FAILED, JOptionPane.ERROR_MESSAGE)
+        var exit = true
+
+        if (Data.isAnyChangedAndSelected == true) {
+            val answer = MessageDialog.ask(label = Constants.MESSAGE_ASK_SAVE)
+
+            exit = when (answer) {
+                YesNoCancel.YES -> {
+                    if (Data.saveTracks() == false) {
+                        MessageDialog.error(label = Constants.ERROR_SAVE)
+                        false
+                    }
+                    else {
+                        true
+                    }
+                }
+                YesNoCancel.NO -> true
+                YesNoCancel.CANCEL -> false
+            }
         }
-        else {
+
+        if (exit == true) {
             prefSave()
             isVisible = false
             dispose()

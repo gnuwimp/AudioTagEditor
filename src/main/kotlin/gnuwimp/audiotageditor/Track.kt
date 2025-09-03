@@ -5,8 +5,10 @@
 
 package gnuwimp.audiotageditor
 
+import gnuwimp.swing.ShowImage
+import gnuwimp.swing.ShowImageFile
 import gnuwimp.swing.Swing
-import gnuwimp.swing.scale
+import gnuwimp.swing.toImageIcon
 import gnuwimp.util.TimeFormat
 import gnuwimp.util.format
 import gnuwimp.util.numOrZero
@@ -14,10 +16,50 @@ import org.jaudiotagger.audio.AudioFile
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.Tag
+import org.jaudiotagger.tag.id3.valuepair.ImageFormats
 import org.jaudiotagger.tag.images.Artwork
 import org.jaudiotagger.tag.images.StandardArtwork
+import org.jaudiotagger.tag.reference.PictureTypes
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
+import javax.imageio.ImageIO
 import javax.swing.ImageIcon
+
+/***
+ *       _____ _                  _               _               _                      _
+ *      / ____| |                | |             | |   /\        | |                    | |
+ *     | (___ | |_ __ _ _ __   __| | __ _ _ __ __| |  /  \   _ __| |___      _____  _ __| | __
+ *      \___ \| __/ _` | '_ \ / _` |/ _` | '__/ _` | / /\ \ | '__| __\ \ /\ / / _ \| '__| |/ /
+ *      ____) | || (_| | | | | (_| | (_| | | | (_| |/ ____ \| |  | |_ \ V  V / (_) | |  |   <
+ *     |_____/ \__\__,_|_| |_|\__,_|\__,_|_|  \__,_/_/    \_\_|   \__| \_/\_/ \___/|_|  |_|\_\
+ *
+ *
+ */
+
+/**
+ * Create Artwork from Image.
+ */
+@Throws(IOException::class)
+fun StandardArtwork.setFromBytes(bytes: ByteArray?) {
+    binaryData = bytes
+    mimeType = ImageFormats.getMimeTypeForBinarySignature(bytes)
+    description = ""
+    pictureType = PictureTypes.DEFAULT_ID
+}
+
+/***
+ *      _      _     _     _________        _    _____                _                   _ _     __
+ *     | |    (_)   | |   / /__   __|      | |  |  __ \              | |   /\            | (_)    \ \
+ *     | |     _ ___| |_ / /   | | __ _ ___| | _| |__) |___  __ _  __| |  /  \  _   _  __| |_  ___ \ \
+ *     | |    | / __| __< <    | |/ _` / __| |/ /  _  // _ \/ _` |/ _` | / /\ \| | | |/ _` | |/ _ \ > >
+ *     | |____| \__ \ |_ \ \   | | (_| \__ \   <| | \ \  __/ (_| | (_| |/ ____ \ |_| | (_| | | (_) / /
+ *     |______|_|___/\__| \_\  |_|\__,_|___/_|\_\_|  \_\___|\__,_|\__,_/_/    \_\__,_|\__,_|_|\___/_/
+ *
+ *
+ */
 
 /**
  * Return loaded tracks from task list.
@@ -37,12 +79,51 @@ val List<TaskReadAudio>.tracks: List<Track>
         return list
     }
 
+/***
+ *      ____         __  __                  _ _____
+ *     |  _ \       / _|/ _|                | |_   _|
+ *     | |_) |_   _| |_| |_ ___ _ __ ___  __| | | |  _ __ ___   __ _  __ _  ___
+ *     |  _ <| | | |  _|  _/ _ \ '__/ _ \/ _` | | | | '_ ` _ \ / _` |/ _` |/ _ \
+ *     | |_) | |_| | | | ||  __/ | |  __/ (_| |_| |_| | | | | | (_| | (_| |  __/
+ *     |____/ \__,_|_| |_| \___|_|  \___|\__,_|_____|_| |_| |_|\__,_|\__, |\___|
+ *                                                                    __/ |
+ *                                                                   |___/
+ */
+
+/**
+ * Convert buffered image to byte array.
+ */
+fun BufferedImage.toByteArray(): ByteArray? {
+    val stream = ByteArrayOutputStream()
+
+    try {
+        ImageIO.write(this, "png", stream)
+        val array = stream.toByteArray()
+        stream.close()
+        return array
+    }
+    catch (_: IOException) {
+        return null
+    }
+}
+
+/***
+ *      _______
+ *     |__   __|
+ *        | | __ _  __ _
+ *        | |/ _` |/ _` |
+ *        | | (_| | (_| |
+ *        |_|\__,_|\__, |
+ *                  __/ |
+ *                 |___/
+ */
+
 /**
  * Get cover image with no exception.
  */
 fun Tag.getCover(): String {
     return try {
-        if (firstArtwork != null) "cover" else ""
+        if (firstArtwork != null) Constants.COVER_EMBEDDED else ""
     }
     catch (e: Exception) {
         Swing.logMessage = e.message.toString()
@@ -71,7 +152,7 @@ fun Tag.setCover(cover: String): Int {
         if (cover == "") {
             deleteArtworkField()
         }
-        else if (cover != "cover") {
+        else if (cover != Constants.COVER_EMBEDDED) {
             deleteArtworkField()
             addField(StandardArtwork.createArtworkFromFile(File(cover)))
         }
@@ -83,6 +164,7 @@ fun Tag.setCover(cover: String): Int {
         1
     }
 }
+
 
 /**
  * Set cover image with no exception.
@@ -113,9 +195,16 @@ fun Tag.setValue(field: FieldKey, value: String): Int {
     }
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _______             _    ______               _
+ *     |__   __|           | |  |  ____|             | |
+ *        | |_ __ __ _  ___| | _| |____   _____ _ __ | |_
+ *        | | '__/ _` |/ __| |/ /  __\ \ / / _ \ '_ \| __|
+ *        | | | | (_| | (__|   <| |___\ V /  __/ | | | |_
+ *        |_|_|  \__,_|\___|_|\_\______\_/ \___|_| |_|\__|
+ *
+ *
+ */
 
 /**
  * Data events for all classes that are interested to receive data changes.
@@ -128,9 +217,16 @@ enum class TrackEvent {
     LIST_UPDATED,
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _______             _    _      _     _
+ *     |__   __|           | |  | |    (_)   | |
+ *        | |_ __ __ _  ___| | _| |     _ ___| |_ ___ _ __   ___ _ __
+ *        | | '__/ _` |/ __| |/ / |    | / __| __/ _ \ '_ \ / _ \ '__|
+ *        | | | | (_| | (__|   <| |____| \__ \ ||  __/ | | |  __/ |
+ *        |_|_|  \__,_|\___|_|\_\______|_|___/\__\___|_| |_|\___|_|
+ *
+ *
+ */
 
 /**
  * Interface for track data events
@@ -140,9 +236,16 @@ interface TrackListener {
     fun update(event: TrackEvent) {}
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _______             _
+ *     |__   __|           | |
+ *        | |_ __ __ _  ___| | __
+ *        | | '__/ _` |/ __| |/ /
+ *        | | | | (_| | (__|   <
+ *        |_|_|  \__,_|\___|_|\_\
+ *
+ *
+ */
 
 /**
  * Track object contains medata data about audio tracks.
@@ -150,18 +253,20 @@ interface TrackListener {
  * It will use JAudioTagger library for loading and saving.
  * JAudioTagger library is only used in this file.
  */
-class Track(file: File) {
+class Track(val file: File) {
     companion object {
         var ERRORS = 0
     }
 
-    private var audio: AudioFile? = null
-    private var selected          = true
-    private var error             = false
-    private var changed           = false
-    private var cleared           = false
-    private val test              = mutableMapOf<String, String>()
-    private val prop              = mutableMapOf<String, String>()
+    private var audio: AudioFile?      = null
+    private var scaled: BufferedImage? = null
+    private var coverBytes             = ByteArray(0)
+    private var selected               = true
+    private var error                  = false
+    private var changed                = false
+    private var cleared                = false
+    private val test                   = mutableMapOf<String, String>()
+    private val prop                   = mutableMapOf<String, String>()
 
     /**
      * Album string.
@@ -242,36 +347,56 @@ class Track(file: File) {
 
     /**
      * Cover string.
-     * If string is "cover" then it means that the cover is the embedded image in audio track.
+     * If string is Constants.COVER_EMBEDDED then cover is the embedded image in audio track.
      * If string is empty then it does not have any image.
      * Otherwise, it should be pointing to an image file.
      */
     var cover: String
-        get() = test["cover"] ?: ""
+        get() = test[Constants.COVER_EMBEDDED] ?: ""
 
         set(value) {
-            if (test["cover"] != value) {
-                test["cover"] = value
+            if (test[Constants.COVER_EMBEDDED] != value) {
+                test[Constants.COVER_EMBEDDED] = value
                 changed = true
             }
         }
 
-    /**
-     * Loaded image from audio track or from external image file or the default image.
-     */
-    val coverIcon: ImageIcon
+    val coverIcon: Pair<ImageIcon, String>
         get() {
-            return if (cover == "cover") {
-                try {
-                    ImageIcon(audio?.tag?.firstArtwork?.binaryData).scale(Constants.ICON_SIZE.toDouble())
+            return when (cover) {
+                Constants.COVER_EMBEDDED -> {
+                    try {
+                        val img = image
+
+                        if (img != null) {
+                            img.toImageIcon(Constants.ICON_SIZE.toDouble()) to "Image size: ${img.width} x ${img.height}"
+                        } else {
+                            Data.loadIconFromPath()
+                        }
+                    } catch (e: Exception) {
+                        Data.message = e.message ?: ""
+                        Data.loadIconFromPath()
+                    }
                 }
-                catch (e: Exception) {
-                    Data.message = e.message ?: ""
-                    Data.loadIconFromPath()
+
+                Constants.COVER_SCALED -> {
+                    try {
+                        val img = scaled
+
+                        if (img != null) {
+                            img.toImageIcon(Constants.ICON_SIZE.toDouble()) to "Image size: ${img.width} x ${img.height}"
+                        } else {
+                            Data.loadIconFromPath()
+                        }
+                    } catch (e: Exception) {
+                        Data.message = e.message ?: ""
+                        Data.loadIconFromPath()
+                    }
                 }
-            }
-            else {
-                Data.loadIconFromPath(cover)
+
+                else -> {
+                    Data.loadIconFromPath(cover)
+                }
             }
         }
 
@@ -388,7 +513,7 @@ class Track(file: File) {
                 else if (composer != tag.getValue(FieldKey.COMPOSER)) {
                     return true
                 }
-                else if (cover != "cover") {
+                else if (cover != Constants.COVER_EMBEDDED) {
                     return true
                 }
                 else if (encoder != tag.getValue(FieldKey.ENCODER)) {
@@ -416,6 +541,23 @@ class Track(file: File) {
      */
     val hasError: Boolean
         get() = error
+
+    /**
+     * Get original cover image.
+     */
+    val image: BufferedImage?
+        get() = if (coverBytes.isNotEmpty()) {
+            try {
+                val stream = ByteArrayInputStream(coverBytes)
+                ImageIO.read(stream)
+            }
+            catch (_: Exception) {
+                null
+            }
+        }
+        else {
+            null
+        }
 
     /**
      * True if any data in string hash been changed.
@@ -515,6 +657,13 @@ class Track(file: File) {
     }
 
     /**
+     * Clear scaled image.
+     */
+    fun clearScaled() {
+        scaled = null
+    }
+
+    /**
      * Copy metadata from audio track into internal hash.
      * Changed and error flag is cleared even if it failes to read metadata.
      * And if it failes the hash data might be empty.
@@ -531,8 +680,18 @@ class Track(file: File) {
         val file   = audio?.file
         val header = audio?.audioHeader
 
+        scaled  = null
         changed = false
         error   = false
+
+        try {
+            val raw = audio?.tag?.firstArtwork?.binaryData
+            coverBytes = ByteArrayInputStream(raw).readAllBytes()
+
+        }
+        catch (_: Exception) {
+            coverBytes = ByteArray(0)
+        }
 
         if (tag != null && file != null && header != null) {
             prop["samplerate"]      = header.sampleRate
@@ -568,7 +727,7 @@ class Track(file: File) {
 
     /**
      * Copy tags from string hash to audio tag object.
-     * Create new tag to delete all unused tags (for AudiTagEditor) then copy from widgets.
+     * Create new tag to delete all unused tags (for AudioTagEditor) then copy from widgets.
      * Image has to be extracted first, so it can be reattached.
      */
     private fun copyUserDataToTag() {
@@ -594,13 +753,38 @@ class Track(file: File) {
                 ERRORS += tag.setValue(FieldKey.YEAR, year)
             }
 
-            ERRORS += if (cover == "cover" && art != null) {
+            val img = scaled
+
+            ERRORS += if (img != null) {
+                try {
+                    val array = img.toByteArray()
+
+                    tag.deleteArtworkField()
+                    tag.addField(createArtwork(array))
+
+                    0
+                }
+                catch (_: Exception) {
+                    1
+                }
+            }
+            else if (cover == Constants.COVER_EMBEDDED && art != null) {
                 tag.setCover(art)
             }
             else {
                 tag.setCover(cover)
             }
         }
+    }
+
+    /**
+     * Create Artwork from ByteArray.
+     */
+    fun createArtwork(bytes: ByteArray?): StandardArtwork {
+        val artwork = StandardArtwork()
+        artwork.setFromBytes(bytes)
+
+        return artwork
     }
 
     /**
@@ -632,6 +816,74 @@ class Track(file: File) {
 
         error   = false
         cleared = false
+    }
+
+    /**
+     * Resize cover image.
+     */
+    fun resizeImage(size: Int): Boolean {
+        var res = false
+
+        try {
+            val coverImage = when (cover) {
+                Constants.COVER_EMBEDDED -> {
+                    image
+                }
+                Constants.COVER_SCALED -> {
+                    scaled
+                }
+                Constants.COVER_REMOVED -> {
+                    scaled
+                }
+                else -> {
+                    ImageIO.read(File(cover))
+                }
+            }
+
+            if (coverImage != null) {
+                var width   = coverImage.width
+                var height  = coverImage.height
+                val width2  = width
+                val height2 = height
+
+                if (width > height) {
+                    height = (size.toDouble() * (height.toDouble() / width.toDouble())).toInt()
+                    width  = size
+                }
+                else if (width < height) {
+                    width  = (size.toDouble() * (width.toDouble() / height.toDouble())).toInt()
+                    height = size
+                }
+                else {
+                    width  = size
+                    height = size
+                }
+
+                if (width == width2 && height == height2) {
+                    return false
+                }
+
+                val img = coverImage.getScaledInstance(width, height, BufferedImage.SCALE_SMOOTH)
+                scaled = BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB)
+
+                val graphics = scaled!!.createGraphics()
+                graphics.drawImage(img, 0, 0, null)
+                graphics.dispose()
+
+                changed = true
+                cover   = Constants.COVER_SCALED
+                res     = true
+
+                Data.sendUpdate(TrackEvent.ITEM_IMAGE)
+                Data.message = Constants.MESSAGE_RESIZED_COVER.format(fileName)
+
+            }
+        }
+        catch (e: Exception) {
+            Data.message = e.message ?: ""
+        }
+
+        return res
     }
 
     /**
@@ -674,6 +926,23 @@ class Track(file: File) {
         }
         else {
             throw Exception("Track.save: internal problem")
+        }
+    }
+
+    /**
+     * Show cover image in a dialog.
+     */
+    fun showCover() {
+        val img = scaled
+
+        if (img != null) {
+            ShowImage(image = img, title = "Scaled Image").isVisible = true
+        }
+        else if (cover == Constants.COVER_EMBEDDED) {
+            ShowImage(image = this.image, title = "Embedded Image").isVisible = true
+        }
+        else {
+            ShowImageFile(imageFile = cover, title = cover).isVisible = true
         }
     }
 

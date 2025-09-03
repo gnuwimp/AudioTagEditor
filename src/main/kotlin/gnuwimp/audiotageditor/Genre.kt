@@ -5,6 +5,17 @@
 
 package gnuwimp.audiotageditor
 
+/***
+ *       _____
+ *      / ____|
+ *     | |  __  ___ _ __  _ __ ___
+ *     | | |_ |/ _ \ '_ \| '__/ _ \
+ *     | |__| |  __/ | | | | |  __/
+ *      \_____|\___|_| |_|_|  \___|
+ *
+ *
+ */
+
 /**
  * All sorts of genre tags.
  */
@@ -66,7 +77,9 @@ object Genre {
         "Instrumental",
         "Lo-fi",
         "Meditative",
+        "Musical",
         "Musical Improvisation",
+        "New-age",
         "Nintendocore",
         "Progressive",
         "Psychedelic",
@@ -159,23 +172,28 @@ object Genre {
 
     val ELECTRONIC = listOf(
         "Electronic",
-        "Electronica",
         "Acid House",
         "Acid Techno",
         "Acid Trance",
+        "Ambient",
         "Ambient House",
         "Ambient Techno",
-        "Ambient",
         "Avant-garde",
         "Bass",
+        "Berlin Techno",
         "Chill-out",
         "D&B",
+        "Dark Techno",
+        "Deep Techno",
+        "Detroit Techno",
         "Disco",
         "Drum & Bass",
         "Dub",
+        "Dub Techno",
         "EDM",
         "Electro House",
         "Electronic Rock",
+        "Electronica",
         "Eurobeat",
         "Eurodance",
         "Eurodisco",
@@ -183,9 +201,13 @@ object Genre {
         "Goa Trance",
         "Hard Trance",
         "Hardcore",
+        "Hardcore Techno",
         "Hip-hop",
         "House",
+        "Industrial Techno",
         "Krautrock",
+        "Melodic Techno",
+        "Minimal Techno",
         "New Wave",
         "New-age",
         "Post-rock",
@@ -196,6 +218,7 @@ object Genre {
         "Psydub",
         "Space Rock",
         "Spacemusic",
+        "Tech House",
         "Techno",
         "Trance",
     )
@@ -212,6 +235,7 @@ object Genre {
         "Folk Rock",
         "Folk Pop",
         "Indie Folk",
+        "Klezmer",
         "Progressive Folk",
         "Protest Song",
         "Psychedelic Folk",
@@ -279,6 +303,7 @@ object Genre {
         "Funk Metal",
         "Gothic Doom",
         "Gothic Metal",
+        "Groove Metal",
         "Hardcore",
         "Hardcore Punk",
         "Heavy Metal",
@@ -287,6 +312,8 @@ object Genre {
         "Jazz Metal",
         "Melodic Death Metal",
         "Metalcore",
+        "Nu Metal",
+        "Occult Metal",
         "Post-metal",
         "Power Metal",
         "Progressive Death Metal",
@@ -381,10 +408,13 @@ object Genre {
         "Indie Rock",
         "Industrial",
         "Industrial Rock",
+        "Instrumental Rock",
         "Japanese Rock",
         "Jazz Rock",
         "Krautrock",
+        "Latin Rock",
         "New Wave",
+        "Occult Rock",
         "Post-metal",
         "Post-punk",
         "Post-rock",

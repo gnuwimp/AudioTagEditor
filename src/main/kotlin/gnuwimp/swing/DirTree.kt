@@ -14,19 +14,37 @@ import java.io.File
 import javax.swing.*
 import javax.swing.tree.*
 
+/***
+ *           _ _______
+ *          | |__   __|
+ *          | |  | |_ __ ___  ___
+ *      _   | |  | | '__/ _ \/ _ \
+ *     | |__| |  | | | |  __/  __/
+ *      \____/   |_|_|  \___|\___|
+ *
+ *
+ */
+
 /**
- * Copy closed icon to leaf icon (make them same)
+ * Copy closed icon to leaf icon (make them same).
  */
 fun JTree.copyClosedIconToLeafIcon() {
     (this.cellRenderer as DefaultTreeCellRenderer).leafIcon = (this.cellRenderer as DefaultTreeCellRenderer).closedIcon
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _____  _      _____        _
+ *     |  __ \(_)    |  __ \      | |
+ *     | |  | |_ _ __| |  | | __ _| |_ __ _
+ *     | |  | | | '__| |  | |/ _` | __/ _` |
+ *     | |__| | | |  | |__| | (_| | || (_| |
+ *     |_____/|_|_|  |_____/ \__,_|\__\__,_|
+ *
+ *
+ */
 
 /**
- * Store file data for a tree node
+ * Store file data for a tree node.
  */
 data class DirData(val file: File) {
     /**
@@ -37,12 +55,19 @@ data class DirData(val file: File) {
     }
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _____  _      _      _     _
+ *     |  __ \(_)    | |    (_)   | |
+ *     | |  | |_ _ __| |     _ ___| |_ ___ _ __   ___ _ __
+ *     | |  | | | '__| |    | / __| __/ _ \ '_ \ / _ \ '__|
+ *     | |__| | | |  | |____| \__ \ ||  __/ | | |  __/ |
+ *     |_____/|_|_|  |______|_|___/\__\___|_| |_|\___|_|
+ *
+ *
+ */
 
 /**
- * Interface for callbacks when directory path has been changed
+ * Interface for callbacks when directory path has been changed.
  */
 interface DirListener {
     /**
@@ -51,8 +76,19 @@ interface DirListener {
     fun pathChanged(path: String)
 }
 
+/***
+ *      _____  _      _____                        _      _     _
+ *     |  __ \(_)    |  __ \                      | |    (_)   | |
+ *     | |  | |_ _ __| |__) |__  _ __  _   _ _ __ | |     _ ___| |_ ___ _ __   ___ _ __
+ *     | |  | | | '__|  ___/ _ \| '_ \| | | | '_ \| |    | / __| __/ _ \ '_ \ / _ \ '__|
+ *     | |__| | | |  | |  | (_) | |_) | |_| | |_) | |____| \__ \ ||  __/ | | |  __/ |
+ *     |_____/|_|_|  |_|   \___/| .__/ \__,_| .__/|______|_|___/\__\___|_| |_|\___|_|
+ *                              | |         | |
+ *                              |_|         |_|
+ */
+
 /**
- * Mouse right click listener for popup menu
+ * Mouse right click listener for popup menu.
  */
 class DirPopupListener(val menu: JPopupMenu) : MouseAdapter() {
     /**
@@ -65,22 +101,28 @@ class DirPopupListener(val menu: JPopupMenu) : MouseAdapter() {
     }
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _____  _   _______
+ *     |  __ \(_) |__   __|
+ *     | |  | |_ _ __| |_ __ ___  ___
+ *     | |  | | | '__| | '__/ _ \/ _ \
+ *     | |__| | | |  | | | |  __/  __/
+ *     |_____/|_|_|  |_|_|  \___|\___|
+ *
+ *
+ */
 
 /**
- * A directory tree panel
- * With a popup mouse menu with a few options
+ * A directory tree panel.
+ * With a popup mouse menu with a few options.
  */
 class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
-    private val topNode:   DefaultMutableTreeNode
-    private val treeModel: DefaultTreeModel
-
-    private val tree         = JTree()
-    private val menu         = JPopupMenu()
-    private var selectedNode = DefaultMutableTreeNode()
-
+    private val topNode:      DefaultMutableTreeNode
+    private val treeModel:    DefaultTreeModel
+    private val tree          = JTree()
+    private val menu          = JPopupMenu()
+    private var selectedNode  = DefaultMutableTreeNode()
+    private val mouseListener = DirPopupListener(menu)
     init {
         val scroll = JScrollPane(tree)
 
@@ -106,7 +148,7 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
         tree.showsRootHandles             = true
         tree.isEditable                   = false
 
-        tree.addMouseListener(DirPopupListener(menu))
+        tree.addMouseListener(mouseListener)
         tree.copyClosedIconToLeafIcon()
 
         tree.addTreeSelectionListener {
@@ -122,8 +164,8 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
     }
 
     /**
-     * Callback for popup menu
-     * It will catch eventual exceptions and display it in an error dialog
+     * Callback for popup menu.
+     * It will catch eventual exceptions and display it in an error dialog.
      */
     override fun actionPerformed(actionEvent: ActionEvent?) {
         try {
@@ -136,12 +178,12 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
                 dirListener.pathChanged((selectedNode.userObject as DirData).file.path)
             }
             else if (actionEvent.actionCommand == "Rename directory") {
-                val newDirName = JOptionPane.showInputDialog(this, "Enter new directory name", "Rename Directory", JOptionPane.QUESTION_MESSAGE)
-                val dir        = selectedNode.userObject as DirData
+                val answer = InputDialog.ask(label = "<b>Rename directory!</b>\nEnter new directory name.")
+                val dir    = selectedNode.userObject as DirData
 
-                if (!newDirName.isNullOrBlank() && newDirName != dir.file.name) {
+                if (answer.isNullOrBlank() == false && answer != dir.file.name) {
                     val from = dir.file
-                    val to   = File(from.parent + File.separator + newDirName)
+                    val to   = File(from.parent + File.separator + answer)
 
                     if (from.renameTo(to) == false) {
                         throw Exception("error: can't rename directory")
@@ -154,11 +196,11 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
                 }
             }
             else if (actionEvent.actionCommand == "Create directory") {
-                val newDirName = JOptionPane.showInputDialog(this, "Enter new directory name", "Create Directory", JOptionPane.QUESTION_MESSAGE)
+                val answer = InputDialog.ask(label = "<b>Create directory!</b>\nEnter new directory name.")
 
-                if (newDirName.isNullOrEmpty() == false) {
+                if (answer.isNullOrEmpty() == false) {
                     val currDir = (selectedNode.userObject as DirData).file
-                    val newDir  = File(currDir.path + File.separator + newDirName)
+                    val newDir  = File(currDir.path + File.separator + answer)
 
                     if (newDir.mkdir() == false) {
                         throw Exception("error: can't create directory")
@@ -171,9 +213,9 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
                 }
             }
             else if (actionEvent.actionCommand == "Delete directory") {
-                val answer = JOptionPane.showConfirmDialog(this, "Delete this directory (must be empty)?", "Delete Directory", JOptionPane.YES_NO_OPTION)
+                val answer = MessageDialog.askOkCancel(label = "<b>Delete directory!</b>\nDirectory must be empty.")
 
-                if (answer == JOptionPane.YES_OPTION) {
+                if (answer == YesNoCancel.YES) {
                     if ((selectedNode.userObject as DirData).file.delete() == false) {
                         throw Exception("error: can't delete directory")
                     }
@@ -189,12 +231,12 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
             }
         }
         catch (e: Exception) {
-            JOptionPane.showMessageDialog(this, e, "File Error", JOptionPane.ERROR_MESSAGE)
+            MessageDialog.error(label = e.toString())
         }
     }
 
     /**
-     * Add child directories to parent directory
+     * Add child directories to parent directory.
      */
     private fun addDir(node: DefaultMutableTreeNode) {
         node.removeAllChildren()
@@ -215,7 +257,26 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
     }
 
     /**
-     * Create sub path
+     *
+     */
+    fun enableTree(value: Boolean) {
+        if (value == true) {
+            val exist = tree.mouseListeners.find { it == mouseListener }
+
+            if (exist == null) {
+                tree.addMouseListener(mouseListener)
+            }
+
+            enable(true, this)
+        }
+        else {
+            tree.removeMouseListener(mouseListener)
+            enable(false, this)
+        }
+    }
+
+    /**
+     * Create sub path.
      */
     private fun makePath(paths: List<String>, index: Int): String {
         var path = ""
@@ -245,10 +306,10 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
     }
 
     /**
-     * Restore and select path
+     * Restore and select path.
      */
     fun restore(path: String) {
-        val paths    = File(path).canonicalPath.split(("\\" + File.separator).toRegex()).dropLastWhile(String::isEmpty)
+        val paths    = File(path).absolutePath.split(("\\" + File.separator).toRegex()).dropLastWhile(String::isEmpty)
         val node     = restorePath(paths, if (Swing.isUnix) 1 else 0, topNode)
         val treePath = TreePath(node.path)
 
@@ -257,12 +318,13 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
     }
 
     /**
-     * Restore child subPaths recursively
-     * And return last used tree node
+     * Restore child subPaths recursively.
+     * And return last used tree node.
      */
     private fun restorePath(subPaths: List<String>, index: Int, node: DefaultMutableTreeNode): DefaultMutableTreeNode {
-        if (index >= subPaths.size)
+        if (index >= subPaths.size) {
             return node
+        }
 
         if (node.isLeaf == true) {
             addDir(node)
@@ -273,11 +335,18 @@ class DirTree(val dirListener: DirListener) : JPanel(), ActionListener {
         for (childNode in node.children()) {
             val dir = (childNode as DefaultMutableTreeNode).userObject as DirData
 
-            if (path == dir.file.canonicalPath) {
+            if (path == dir.file.absolutePath) {
                 return restorePath(subPaths, index + 1, childNode)
             }
         }
 
         return node
+    }
+
+    /**
+     * Set tooltip text for the tree.
+     */
+    fun toolTipText(value: String) {
+        tree.toolTipText = value
     }
 }

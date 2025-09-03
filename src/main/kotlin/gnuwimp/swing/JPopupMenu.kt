@@ -9,6 +9,17 @@ import java.awt.event.ActionListener
 import javax.swing.JMenuItem
 import javax.swing.JPopupMenu
 
+/***
+ *           _ _____                        __  __
+ *          | |  __ \                      |  \/  |
+ *          | | |__) |__  _ __  _   _ _ __ | \  / | ___ _ __  _   _
+ *      _   | |  ___/ _ \| '_ \| | | | '_ \| |\/| |/ _ \ '_ \| | | |
+ *     | |__| | |  | (_) | |_) | |_| | |_) | |  | |  __/ | | | |_| |
+ *      \____/|_|   \___/| .__/ \__,_| .__/|_|  |_|\___|_| |_|\__,_|
+ *                       | |         | |
+ *                       |_|         |_|
+ */
+
 /**
  * Add menu items to popup menu
  */

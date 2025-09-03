@@ -3,6 +3,8 @@
  * Released under the GNU General Public License v3.0
  */
 
+@file:Suppress("GrazieInspection")
+
 package gnuwimp.swing
 
 import java.awt.Color
@@ -14,6 +16,17 @@ import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.JTableHeader
 import javax.swing.table.TableCellRenderer
+
+/***
+ *      _______    _     _      _    _                _
+ *     |__   __|  | |   | |    | |  | |              | |
+ *        | | __ _| |__ | | ___| |__| | ___  __ _  __| | ___ _ __
+ *        | |/ _` | '_ \| |/ _ \  __  |/ _ \/ _` |/ _` |/ _ \ '__|
+ *        | | (_| | |_) | |  __/ |  | |  __/ (_| | (_| |  __/ |
+ *        |_|\__,_|_.__/|_|\___|_|  |_|\___|\__,_|\__,_|\___|_|
+ *
+ *
+ */
 
 /**
  * Adapter class for receiving click events when a table header is clicked
@@ -40,9 +53,16 @@ abstract class TableHeader : MouseAdapter() {
     fun isControlDown(event: MouseEvent?) = event != null && event.isControlDown
 }
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/***
+ *      _______    _     _
+ *     |__   __|  | |   | |
+ *        | | __ _| |__ | | ___
+ *        | |/ _` | '_ \| |/ _ \
+ *        | | (_| | |_) | |  __/
+ *        |_|\__,_|_.__/|_|\___|
+ *
+ *
+ */
 
 /**
  * A table class for coloring rows in table view
@@ -97,8 +117,8 @@ open class Table : JTable() {
         }
 
     /**
-     * Align text in column, but not in header
-     * Text align values are SwingConstants.LEFT, SwingConstants.CENTER or SwingConstants.RIGHT
+     * Align text in column, but not in header.
+     * Text align values are SwingConstants.LEFT, SwingConstants.CENTER or SwingConstants.RIGHT.
      */
     fun setColumnAlign(column: Int, align: Int) {
         val rend = DefaultTableCellRenderer()

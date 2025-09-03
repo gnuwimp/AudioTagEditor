@@ -3,21 +3,32 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor.file
+package gnuwimp.audiotageditor
 
-import gnuwimp.audiotageditor.*
-import gnuwimp.swing.LayoutPanel
-import gnuwimp.swing.Swing
-import gnuwimp.swing.TableHeader
+import gnuwimp.swing.*
 import gnuwimp.util.numOrZero
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JScrollPane
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
 import javax.swing.table.AbstractTableModel
 
-/**
- * Table for track file names
+/***
+ *      ______ _ _   _______    _     _
+ *     |  ____(_) | |__   __|  | |   | |
+ *     | |__   _| | ___| | __ _| |__ | | ___
+ *     |  __| | | |/ _ \ |/ _` | '_ \| |/ _ \
+ *     | |    | | |  __/ | (_| | |_) | |  __/
+ *     |_|    |_|_|\___|_|\__,_|_.__/|_|\___|
+ *
+ *
  */
-class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+
+/**
+ * Table for track filenames
+ */
+class FileTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     private val colSelect      = 0
     private val colTrack       = 1
     private val colFile        = 2
@@ -34,15 +45,18 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     val isEditing: Boolean
         get() = table.isEditing
 
-
+    /**
+     *
+     */
     init {
         val scroll = JScrollPane()
 
         scroll.viewport.view = table
-        add(scroll,         x = 1,   y = 1,  w = -1, h = -6)
-        add(filterButton,   x = -63, y = -5, w = 20, h = 4)
-        add(selectButton,   x = -42, y = -5, w = 20, h = 4)
-        add(unselectButton, x = -21, y = -5, w = 20, h = 4)
+
+        add(scroll,         x =   1, y =  1, w =  -1, h = -6)
+        add(filterButton,   x = -57, y = -5, w =  18, h =  4)
+        add(selectButton,   x = -38, y = -5, w =  18, h =  4)
+        add(unselectButton, x = -19, y = -5, w =  18, h =  4)
 
         filterButton.toolTipText   = Constants.TOOL_SELECT_FILE
         selectButton.toolTipText   = Constants.TOOL_SELECT_ALL
@@ -66,7 +80,7 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
          * Search and select tracks.
          */
         filterButton.addActionListener {
-            val answer = JOptionPane.showInputDialog(Main.window, Constants.MESSAGE_ASK_FILTER_FILE, Constants.DIALOG_FILTER, JOptionPane.YES_NO_OPTION)
+            val answer = InputDialog.ask(label = Constants.MESSAGE_ASK_FILTER_FILE, def = OkCancel.OK)
 
             if (answer.isNullOrBlank() == false) {
                 Data.filterOnFiles(answer)
@@ -163,16 +177,17 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
             }
         }
 
-        table.tableHeader.toolTipText = Constants.TOOL_TABLE_HEAD
-        table.setColumnWidth(colSelect,    min =  50, pref =  50, max =    75)
-        table.setColumnWidth(colTrack,     min =  50, pref =  50, max =    75)
+        table.tableHeader.toolTipText = Constants.TOOL_TABLE_HEAD_FILE
+        table.setColumnWidth(colSelect,    min =  75, pref =  75, max =   100)
+        table.setColumnWidth(colTrack,     min =  75, pref =  75, max =   100)
         table.setColumnWidth(colFile,      min = 150, pref = 500, max = 10000)
-        table.setColumnWidth(colExtension, min =  50, pref = 100, max =   100)
-        table.setColumnWidth(colSize,      min =  50, pref = 100, max =   100)
+        table.setColumnWidth(colExtension, min = 100, pref = 100, max =   125)
+        table.setColumnWidth(colSize,      min = 100, pref = 150, max =   125)
         table.setShowGrid(false)
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         table.setColumnAlign(colTrack, SwingConstants.CENTER)
         table.setColumnAlign(colSize, SwingConstants.RIGHT)
+        table.setFontSizeForEditor(colFile)
 
         /**
          * Enable table header for receiving mouse clicks so data can be sorted.
@@ -180,11 +195,11 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         table.tableHeader.addMouseListener(object : TableHeader() {
             override fun mouseClicked(event: MouseEvent?) {
                 when (columnIndex(event)) {
-                    colSelect -> Data.sortTracks(Data.Sort.SELECTED, isControlDown(event))
-                    colTrack -> Data.sortTracks(Data.Sort.TRACK, isControlDown(event))
-                    colFile -> Data.sortTracks(Data.Sort.FILE, isControlDown(event))
-                    colExtension -> Data.sortTracks(Data.Sort.EXTENSION, isControlDown(event))
-                    colSize -> Data.sortTracks(Data.Sort.SIZE, isControlDown(event))
+                    colSelect -> Data.sortTracks(sortTracksOn = Data.Sort.SELECTED, descending = isControlDown(event))
+                    colTrack -> Data.sortTracks(sortTracksOn = Data.Sort.TRACK, descending = isControlDown(event))
+                    colFile -> Data.sortTracks(sortTracksOn = Data.Sort.PATH, descending = isControlDown(event))
+                    colExtension -> Data.sortTracks(sortTracksOn = Data.Sort.EXTENSION, descending = isControlDown(event))
+                    colSize -> Data.sortTracks(sortTracksOn = Data.Sort.SIZE, descending = isControlDown(event))
                 }
 
                 Data.sendUpdate(TrackEvent.LIST_UPDATED)
@@ -211,17 +226,18 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
                     TrackEvent.ITEM_DIRTY -> {
                         repaint()
                     }
-                    TrackEvent.LIST_UPDATED -> {
-                        cancelEditing()
-                        table.fireModel()
-                        selectButton.isEnabled   = Data.tracks.isNotEmpty()
-                        unselectButton.isEnabled = Data.tracks.isNotEmpty()
-                        filterButton.isEnabled   = Data.tracks.isNotEmpty()
+                    TrackEvent.ITEM_IMAGE -> {
                     }
                     TrackEvent.ITEM_SELECTED -> {
                         table.selectRow = Data.selectedRow
                     }
-                    TrackEvent.ITEM_IMAGE -> {
+                    TrackEvent.LIST_UPDATED -> {
+                        selectButton.isEnabled   = Data.tracks.isNotEmpty()
+                        unselectButton.isEnabled = Data.tracks.isNotEmpty()
+                        filterButton.isEnabled   = Data.tracks.isNotEmpty()
+
+                        cancelEditing()
+                        table.fireModel()
                     }
                 }
             }

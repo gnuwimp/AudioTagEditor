@@ -3,34 +3,47 @@
  * Released under the GNU General Public License v3.0
  */
 
-package gnuwimp.audiotageditor.track
+package gnuwimp.audiotageditor
 
-import gnuwimp.audiotageditor.*
-import gnuwimp.swing.LayoutPanel
-import gnuwimp.swing.Swing
-import gnuwimp.swing.TableHeader
+import gnuwimp.swing.*
 import gnuwimp.util.numOrZero
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JScrollPane
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
 import javax.swing.table.AbstractTableModel
+
+/***
+ *      _______             _ _______    _     _
+ *     |__   __|           | |__   __|  | |   | |
+ *        | |_ __ __ _  ___| | _| | __ _| |__ | | ___
+ *        | | '__/ _` |/ __| |/ / |/ _` | '_ \| |/ _ \
+ *        | | | | (_| | (__|   <| | (_| | |_) | |  __/
+ *        |_|_|  \__,_|\___|_|\_\_|\__,_|_.__/|_|\___|
+ *
+ *
+ */
 
 /**
  * Create a table with track data.
  */
-class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
-    private val colSelect      = 0
-    private val colTrack       = 1
-    private val colFile        = 2
-    private val colFormat      = 3
-    private val colBitrate     = 4
-    private val colTime        = 5
-    private val table          = DataTable()
-    private val clearButton    = JButton(Constants.LABEL_DELETE_TAGS)
-    private val deleteButton   = JButton(Constants.LABEL_DELETE_TRACKS)
-    private val downButton     = JButton(Constants.LABEL_MOVE_DOWN)
-    private val selectButton   = JButton(Constants.LABEL_SELECT_ALL)
-    private val unselectButton = JButton(Constants.LABEL_SELECT_NONE)
-    private val upButton       = JButton(Constants.LABEL_MOVE_UP)
+class TrackTable : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
+    private val colSelect         = 0
+    private val colTrack          = 1
+    private val colFile           = 2
+    private val colFormat         = 3
+    private val colBitrate        = 4
+    private val colTime           = 5
+    private val deleteFilesButton = JButton(Constants.LABEL_DELETE_TRACKS)
+    private val deleteTagsButton  = JButton(Constants.LABEL_DELETE_TAGS)
+    private val filterButton      = JButton(Constants.LABEL_FILTER)
+    private val moveDownButton    = JButton(Constants.LABEL_MOVE_DOWN)
+    private val moveUpButton      = JButton(Constants.LABEL_MOVE_UP)
+    private val resizeButton      = JButton(Constants.LABEL_RESIZE_ALL)
+    private val selectButton      = JButton(Constants.LABEL_SELECT_ALL)
+    private val table             = DataTable()
+    private val unselectButton    = JButton(Constants.LABEL_SELECT_NONE)
 
     /**
      * Return true if table is in edit mode.
@@ -38,51 +51,78 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
     val isEditing: Boolean
         get() = table.isEditing
 
+    /**
+     *
+     */
     init {
         val scroll = JScrollPane()
 
         scroll.viewport.view = table
-        add(scroll,         x =    1, y = 1,  w = -1, h = -6)
-        add(deleteButton,   x = -127, y = -5, w = 20, h = 4)
-        add(clearButton,    x = -106, y = -5, w = 20, h = 4)
-        add(selectButton,   x =  -84, y = -5, w = 20, h = 4)
-        add(unselectButton, x =  -63, y = -5, w = 20, h = 4)
-        add(downButton,     x =  -42, y = -5, w = 20, h = 4)
-        add(upButton,       x =  -21, y = -5, w = 20, h = 4)
 
-        clearButton.isEnabled      = false
-        clearButton.toolTipText    = Constants.TOOL_DELETE_TAGS
-        deleteButton.isEnabled     = false
-        deleteButton.toolTipText   = Constants.TOOL_DELETE_TRACKS
-        downButton.isEnabled       = false
-        downButton.toolTipText     = Constants.TOOL_MOVE_DOWN
-        selectButton.toolTipText   = Constants.TOOL_SELECT_ALL
-        unselectButton.toolTipText = Constants.TOOL_SELECT_NONE
-        upButton.isEnabled         = false
-        upButton.toolTipText       = Constants.TOOL_MOVE_UP
+        add(scroll,             x =    1, y =  1, w = -1, h = -6)
+        add(resizeButton,       x = -152, y = -5, w = 18, h =  4)
+        add(deleteFilesButton,  x = -133, y = -5, w = 18, h =  4)
+        add(deleteTagsButton,   x = -114, y = -5, w = 18, h =  4)
+        add(filterButton,       x =  -95, y = -5, w = 18, h =  4)
+        add(selectButton,       x =  -76, y = -5, w = 18, h =  4)
+        add(unselectButton,     x =  -57, y = -5, w = 18, h =  4)
+        add(moveDownButton,     x =  -38, y = -5, w = 18, h =  4)
+        add(moveUpButton,       x =  -19, y = -5, w = 18, h =  4)
+
+        deleteTagsButton.isEnabled    = false
+        deleteTagsButton.toolTipText  = Constants.TOOL_DELETE_TAGS
+        deleteFilesButton.isEnabled   = false
+        deleteFilesButton.toolTipText = Constants.TOOL_DELETE_TRACKS
+        filterButton.toolTipText      = Constants.TOOL_SELECT_TITLE
+        moveDownButton.isEnabled      = false
+        moveDownButton.toolTipText    = Constants.TOOL_MOVE_DOWN
+        resizeButton.toolTipText      = Constants.TOOL_RESIZE_ALL
+        selectButton.toolTipText      = Constants.TOOL_SELECT_ALL
+        unselectButton.toolTipText    = Constants.TOOL_SELECT_NONE
+        moveUpButton.isEnabled        = false
+        moveUpButton.toolTipText      = Constants.TOOL_MOVE_UP
 
         /**
          * Remove all tags from all selected tracks.
          */
-        clearButton.addActionListener {
-            if (JOptionPane.showConfirmDialog(Main.window, Constants.MESSAGE_ASK_CLEAR_HTML, Constants.DIALOG_CLEAR, JOptionPane.YES_NO_OPTION) == Constants.YES) {
+        deleteTagsButton.addActionListener {
+            val answer = InputDialog.ask(label = Constants.MESSAGE_ASK_DELETE_TAGS)
+
+            if (answer != null && answer == "YES") {
                 Data.removeTagsForAll()
             }
+
+            focus()
         }
 
         /**
          *
          */
-        deleteButton.addActionListener {
-            if (JOptionPane.showConfirmDialog(Main.window, Constants.MESSAGE_ASK_DELETE_HTML, Constants.DIALOG_DELETE, JOptionPane.YES_NO_OPTION) == 0) {
+        deleteFilesButton.addActionListener {
+            val answer = InputDialog.ask(label = Constants.MESSAGE_ASK_DELETE_FILES)
+
+            if (answer != null && answer == "YES") {
                 Data.deleteTracks()
+            }
+
+            focus()
+        }
+
+        /**
+         * Search and select tracks.
+         */
+        filterButton.addActionListener {
+            val answer = InputDialog.ask(label = Constants.MESSAGE_ASK_FILTER_TITLE, def = OkCancel.OK)
+
+            if (answer.isNullOrBlank() == false) {
+                Data.filterOnTitles(answer)
             }
         }
 
         /**
          * Move current selected row down in track list.
          */
-        downButton.addActionListener {
+        moveDownButton.addActionListener {
             Data.moveRowDown()
         }
 
@@ -91,6 +131,7 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
          */
         selectButton.addActionListener {
             Data.selectAll(true)
+            focus()
         }
 
         /**
@@ -98,13 +139,22 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
          */
         unselectButton.addActionListener {
             Data.selectAll(false)
+            focus()
         }
 
         /**
          * Move current selected row down up track list.
          */
-        upButton.addActionListener {
+        moveUpButton.addActionListener {
             Data.moveRowUp()
+        }
+
+        /**
+         * Resize all selected tracks.
+         */
+        resizeButton.addActionListener {
+            Data.resizeImageForSelectedTracks()
+            focus()
         }
 
         /**
@@ -200,18 +250,19 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
             }
         }
 
-        table.tableHeader.toolTipText = Constants.TOOL_TABLE_HEAD
-        table.setColumnWidth(colSelect,  min =  50, pref =  50, max =    75)
-        table.setColumnWidth(colTrack,   min =  50, pref =  50, max =    75)
+        table.tableHeader.toolTipText = Constants.TOOL_TABLE_HEAD_TRACK
+        table.setColumnWidth(colSelect,  min =  75, pref =  75, max =   100)
+        table.setColumnWidth(colTrack,   min =  75, pref =  75, max =   100)
         table.setColumnWidth(colFile,    min = 150, pref = 500, max = 10000)
         table.setColumnWidth(colFormat,  min =  75, pref =  75, max =   100)
-        table.setColumnWidth(colBitrate, min =  75, pref =  75, max =   100)
-        table.setColumnWidth(colTime,    min =  75, pref =  75, max =   100)
+        table.setColumnWidth(colBitrate, min = 100, pref = 100, max =   125)
+        table.setColumnWidth(colTime,    min = 100, pref = 100, max =   125)
         table.setShowGrid(false)
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         table.setColumnAlign(colTrack, SwingConstants.CENTER)
         table.setColumnAlign(colBitrate, SwingConstants.RIGHT)
         table.setColumnAlign(colTime, SwingConstants.RIGHT)
+        table.setFontSizeForEditor(colFile)
 
         /**
          * Enable table header for receiving mouse clicks so data can be sorted.
@@ -219,12 +270,12 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         table.tableHeader.addMouseListener(object : TableHeader() {
             override fun mouseClicked(event: MouseEvent?) {
                 when (columnIndex(event)) {
-                    colSelect -> Data.sortTracks(Data.Sort.SELECTED, isControlDown(event))
-                    colTrack -> Data.sortTracks(Data.Sort.TRACK, isControlDown(event))
-                    colFile -> Data.sortTracks(Data.Sort.FILE, isControlDown(event))
-                    colFormat -> Data.sortTracks(Data.Sort.FORMAT, isControlDown(event))
-                    colBitrate -> Data.sortTracks(Data.Sort.BITRATE, isControlDown(event))
-                    colTime -> Data.sortTracks(Data.Sort.TIME, isControlDown(event))
+                    colSelect -> Data.sortTracks(sortTracksOn = Data.Sort.SELECTED, descending = isControlDown(event))
+                    colTrack -> Data.sortTracks(sortTracksOn = Data.Sort.TRACK, descending = isControlDown(event))
+                    colFile -> Data.sortTracks(sortTracksOn = Data.Sort.FILE, descending = isControlDown(event))
+                    colFormat -> Data.sortTracks(sortTracksOn = Data.Sort.FORMAT, descending = isControlDown(event))
+                    colBitrate -> Data.sortTracks(sortTracksOn = Data.Sort.BITRATE, descending = isControlDown(event))
+                    colTime -> Data.sortTracks(sortTracksOn = Data.Sort.TIME, descending = isControlDown(event))
                 }
 
                 Data.sendUpdate(TrackEvent.LIST_UPDATED)
@@ -250,25 +301,29 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
             override fun update(event: TrackEvent) {
                 when (event) {
                     TrackEvent.ITEM_DIRTY -> {
-                        clearButton.isEnabled  = Data.countSelected > 0
-                        deleteButton.isEnabled = Data.countSelected > 0
+                        deleteTagsButton.isEnabled  = Data.countSelected > 0
+                        deleteFilesButton.isEnabled = Data.countSelected > 0
+
+                        Data.statFunc(Data.stat)
                         repaint()
                     }
-                    TrackEvent.LIST_UPDATED -> {
-                        cancelEditing()
-                        table.fireModel()
-                        clearButton.isEnabled  = Data.countSelected > 0
-                        deleteButton.isEnabled = Data.countSelected > 0
-                        upButton.isEnabled     = Data.selectedRow > 0
-                        downButton.isEnabled   = (Data.selectedRow > -1 && Data.selectedRow < Data.tracks.size - 1)
+                    TrackEvent.ITEM_IMAGE -> {
                     }
                     TrackEvent.ITEM_SELECTED -> {
-                        table.selectRow        = Data.selectedRow
-                        deleteButton.isEnabled = Data.countSelected > 0
-                        upButton.isEnabled     = Data.selectedRow > 0
-                        downButton.isEnabled   = (Data.selectedRow > -1 && Data.selectedRow < Data.tracks.size - 1)
+                        table.selectRow             = Data.selectedRow
+                        deleteFilesButton.isEnabled = Data.countSelected > 0
+                        moveUpButton.isEnabled      = Data.selectedRow > 0
+                        moveDownButton.isEnabled    = (Data.selectedRow > -1 && Data.selectedRow < Data.tracks.size - 1)
                     }
-                    TrackEvent.ITEM_IMAGE -> {
+                    TrackEvent.LIST_UPDATED -> {
+                        deleteTagsButton.isEnabled  = Data.countSelected > 0
+                        deleteFilesButton.isEnabled = Data.countSelected > 0
+                        moveUpButton.isEnabled      = Data.selectedRow > 0
+                        moveDownButton.isEnabled    = (Data.selectedRow > -1 && Data.selectedRow < Data.tracks.size - 1)
+
+                        cancelEditing()
+                        table.fireModel()
+                        Data.statFunc(Data.stat)
                     }
                 }
              }
@@ -282,5 +337,12 @@ class Table : LayoutPanel(size = Swing.defFont.size / 2 + 1) {
         if (table.isEditing == true) {
             table.cellEditor.cancelCellEditing()
         }
+    }
+
+    /**
+     * Focus table.
+     */
+    fun focus() {
+        table.requestFocus()
     }
 }
